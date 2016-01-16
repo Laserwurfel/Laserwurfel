@@ -3,11 +3,17 @@ Laserwürfel
 
 Ein 3D-Puzzlespiel für Windows, Mac OS und Linux.
 
-Anforderungen
-=============
+Dependencies
+============
 
 GLFW library
-    Download from their `homepage <http://www.glfw.org/download.html>`_.
+    http://www.glfw.org/download.html
 
 GLFW Python bindings
     ``pip install glfw``
+
+PyAudio
+    https://people.csail.mit.edu/hubert/pyaudio/#downloads
+
+oggdec
+    ``vorbis-tools`` or http://rarewares.org/ogg-oggdec.php    
