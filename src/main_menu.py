@@ -19,8 +19,8 @@ class MyFrame(wx.Frame):
 
         gs = wx.GridSizer(4, 1, 5, 5)
 
-        self.btn_main_menu = wx.Button(self, -1, 'Main Menu')
-        self.btn_endless = wx.Button(self, -1, 'Endless Mode')
+        self.btn_main_menu = wx.Button(self, -1, 'Campaign')
+        self.btn_endless = wx.Button(self, -1, 'Endless')
         self.btn_controls = wx.Button(self, -1, 'Settings')
         self.btn_credits = wx.Button(self, -1, 'Credits')
 
