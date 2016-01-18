@@ -12,6 +12,8 @@ class MyFrame(wx.Frame):
         self.Centre()
         self.Show()
 
+        audio.play('../assets/music/OGG files/menu.ogg')
+
     def initUI(self):
         box = wx.BoxSizer(wx.VERTICAL)
 
@@ -38,9 +40,7 @@ class MyFrame(wx.Frame):
         self.SetSizer(box)
 
     def OnButton(self, event):
-        if event.GetEventObject() is self.btn_main_menu:
-            audio.play('../assets/music/OGG files/menu.ogg')
-        elif event.GetEventObject() is self.btn_credits:
+        if event.GetEventObject() is self.btn_credits:
             audio.play('../assets/music/OGG files/credits.ogg')
         else:
             audio.stop()
