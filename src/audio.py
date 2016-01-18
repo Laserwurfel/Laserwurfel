@@ -15,7 +15,7 @@ def _callback(in_data, frame_count, time_info, status):
 def play(file):
     global _stream, _song
 
-    if _stream is not None and _stream.is_active():
+    if _stream is not None:
         stop()
 
     _song = decoder.open(file)
@@ -31,10 +31,15 @@ def play(file):
 
 
 def stop():
-    if _stream is not None and _stream.is_active():
+    global _stream, _song
+
+    if _stream is not None:
         _stream.stop_stream()
         _stream.close()
+        _stream = None
+
         _song.close()
+        _song = None
 
 
 @atexit.register
