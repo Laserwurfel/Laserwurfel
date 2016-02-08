@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import inspect
 import re
 
 from . import structure
@@ -55,7 +56,7 @@ RE_STRUCTURE_POINT = re.compile(r'[a-z]+_[a-z]+(?:_[a-z]+)?')
 POINT_AXES = [
     ['front', 'back'],
     ['left', 'right'],
-    ['up', 'down'],
+    ['down', 'up'],
 ]
 STRUCTURE_FUNCTIONS = {
     '*': structure.path,
@@ -341,13 +342,16 @@ class Level:
                             )
                         point = match.group(0)
 
-                        # TODO parse point
                         parts = point.split('_')
                         if parts[0] in POINT_AXES[0]:
                             if parts[1] in POINT_AXES[1]:
                                 if len(parts) == 2:
                                     # axes 1 2
-                                    pass
+                                    point = [
+                                        parts[0],
+                                        parts[1],
+                                        0,
+                                    ]
                                 elif parts[2] not in POINT_AXES[2]:
                                     raise ValueError(
                                         "Expected axis 3 after axes 1, 2",
@@ -356,7 +360,11 @@ class Level:
                                     )
                                 else:
                                     # axes 1 2 3
-                                    pass
+                                    point = [
+                                        parts[0],
+                                        parts[1],
+                                        parts[2],
+                                    ]
                             elif parts[1] in POINT_AXES[2]:
                                 if len(parts) != 2:
                                     raise ValueError(
@@ -366,7 +374,11 @@ class Level:
                                     )
                                 else:
                                     # axes 1 3
-                                    pass
+                                    point = [
+                                        parts[0],
+                                        0,
+                                        parts[1],
+                                    ]
                         elif parts[0] in POINT_AXES[1]:
                             if len(parts) != 2:
                                 raise ValueError(
@@ -382,7 +394,11 @@ class Level:
                                 )
                             else:
                                 # axes 2 3
-                                pass
+                                point = [
+                                    0,
+                                    parts[0],
+                                    parts[1],
+                                ]
                         else:
                             raise ValueError(
                                 "Expected axis 1 or 2 at beginning",
@@ -390,9 +406,30 @@ class Level:
                                 line_number,
                             )
 
-                        structure_entry.append(point)
+                        # convert point from roll/pitch/yaw to x/y/z
+                        for i in range(3):
+                            if point[i] in POINT_AXES[i]:
+                                if point[i] == POINT_AXES[i][0]:
+                                    point[i] = -1
+                                else:
+                                    point[i] = 1
+                        structure_entry.append((
+                            point[1],
+                            point[0],
+                            point[2],
+                        ))
 
-                    # TODO check argument count with inspection
+                    # both counts have 1 extra element
+                    actual_point_count = len(structure_entry)
+                    expected_point_count = len(inspect.getargspec(
+                        STRUCTURE_FUNCTIONS[structure_entry[0]]
+                    )[0])
+                    if (expected_point_count != actual_point_count):
+                        raise ValueError(
+                            "Expected {} points, got {} instead"
+                            .format(expected_point_count, actual_point_count),
+                            line_number,
+                        )
                     self.structure.append(structure_entry)
             except StopIteration:
                 pass
