@@ -10,8 +10,8 @@ RE_EMPTY = re.compile(r'^\s*$')
 
 RE_META = re.compile(r'^([a-zA-Z]+)+\s*:\s*(.*)$')
 RE_META_VALUES = {
-    'string': re.compile(r'^"[^"]+"$'),
-    'path': re.compile(r'^\.(?:/[^/]+)+'),
+    'string': re.compile(r'^"([^"]*)"$'),
+    'path': re.compile(r'^(\.{0,2}(?:/[^/]+)+)$'),
 }
 
 DETAIL_SHORT_INDENT = ' ' * (1 + (9*2))
@@ -104,8 +104,13 @@ class Level:
 
                     # check if type has known value type
                     for k in RE_META_VALUES:
-                        if RE_META_VALUES[k].match(value):
-                            # TODO extract value
+                        match = RE_META_VALUES[k].match(value)
+                        if match is not None:
+                            # extract value and pass along type information
+                            value = (
+                                k,
+                                match.group(1),
+                            )
                             break
                     else:
                         raise TypeError(
