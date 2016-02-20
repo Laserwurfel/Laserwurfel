@@ -55,7 +55,7 @@ RE_STRUCTURE_POINT = re.compile(r'[a-z]+_[a-z]+(?:_[a-z]+)?')
 POINT_AXES = [
     ['front', 'back'],
     ['left', 'right'],
-    ['up', 'down'],
+    ['down', 'up'],
 ]
 STRUCTURE_FUNCTIONS = {
     '*': structure.path,
@@ -339,15 +339,15 @@ class Level:
                                 "Structure entry has invalid point",
                                 line_number,
                             )
-                        point = match.group(0)
 
-                        # TODO parse point
+                        point = match.group(0)
                         parts = point.split('_')
+
                         if parts[0] in POINT_AXES[0]:
                             if parts[1] in POINT_AXES[1]:
                                 if len(parts) == 2:
                                     # axes 1 2
-                                    pass
+                                    point = (parts[0], parts[1], 0)
                                 elif parts[2] not in POINT_AXES[2]:
                                     raise ValueError(
                                         "Expected axis 3 after axes 1, 2",
@@ -356,7 +356,7 @@ class Level:
                                     )
                                 else:
                                     # axes 1 2 3
-                                    pass
+                                    point = (parts[0], parts[1], parts[2])
                             elif parts[1] in POINT_AXES[2]:
                                 if len(parts) != 2:
                                     raise ValueError(
@@ -366,7 +366,7 @@ class Level:
                                     )
                                 else:
                                     # axes 1 3
-                                    pass
+                                    point = (parts[0], 0, parts[1])
                         elif parts[0] in POINT_AXES[1]:
                             if len(parts) != 2:
                                 raise ValueError(
@@ -382,7 +382,7 @@ class Level:
                                 )
                             else:
                                 # axes 2 3
-                                pass
+                                point = (0, parts[0], parts[1])
                         else:
                             raise ValueError(
                                 "Expected axis 1 or 2 at beginning",
@@ -390,7 +390,25 @@ class Level:
                                 line_number,
                             )
 
-                        structure_entry.append(point)
+                        # parse point
+                        point = tuple(
+                            (
+                                -1
+                                if POINT_AXES[i].index(x) == 0
+                                else
+                                1
+                            )
+                            if type(x) == unicode
+                            else x
+                            for i, x in enumerate(point)
+                        )
+
+                        # convert roll/pitch/yaw to x/y/z
+                        structure_entry.append((
+                            point[1],
+                            point[0],
+                            point[2],
+                        ))
 
                     # TODO check argument count with inspection
                     self.structure.append(structure_entry)
