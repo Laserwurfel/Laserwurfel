@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import re
+import inspect
 
 from . import structure
 
@@ -303,7 +304,7 @@ class Level:
             except StopIteration:
                 raise EOFError("Unexpected end of file")
 
-                # STRUCTURE #
+            # STRUCTURE #
 
             try:
                 while True:
@@ -327,9 +328,10 @@ class Level:
                             .format(structure_function),
                             line_number,
                         )
+                    structure_function = STRUCTURE_FUNCTIONS[structure_function]
+                    structure_entry = [structure_function]
 
                     # get points
-                    structure_entry = [structure_function]
                     for match in RE_STRUCTURE_POINT.finditer(
                             line,
                             match.end(0),
@@ -410,7 +412,18 @@ class Level:
                             point[2],
                         ))
 
-                    # TODO check argument count with inspection
-                    self.structure.append(structure_entry)
+                    # check argument count
+                    # both length are 1 above the actual count
+                    expected = len(inspect.getargspec(structure_entry[0])[0])
+                    actual = len(structure_entry)
+                    if expected != actual:
+                        raise ValueError(
+                            "Expected {} arguments for structure entry, got {}"
+                            .format(expected, actual),
+                            line,
+                            line_number
+                        )
+
+                    self.structure.append(tuple(structure_entry))
             except StopIteration:
                 pass
