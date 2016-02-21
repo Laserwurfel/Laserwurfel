@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import re
+import inspect
 
 from . import structure
 
@@ -9,8 +10,8 @@ RE_EMPTY = re.compile(r'^\s*$')
 
 RE_META = re.compile(r'^([a-zA-Z]+)+\s*:\s*(.*)$')
 RE_META_VALUES = {
-    'string': re.compile(r'^"[^"]+"$'),
-    'path': re.compile(r'^\.(?:/[^/]+)+'),
+    'string': re.compile(r'^"([^"]*)"$'),
+    'path': re.compile(r'^(\.{0,2}(?:/[^/]+)+)$'),
 }
 
 DETAIL_SHORT_INDENT = ' ' * (1 + (9*2))
@@ -55,7 +56,7 @@ RE_STRUCTURE_POINT = re.compile(r'[a-z]+_[a-z]+(?:_[a-z]+)?')
 POINT_AXES = [
     ['front', 'back'],
     ['left', 'right'],
-    ['up', 'down'],
+    ['down', 'up'],
 ]
 STRUCTURE_FUNCTIONS = {
     '*': structure.path,
@@ -66,16 +67,20 @@ STRUCTURE_FUNCTIONS = {
 }
 
 
+def _gen_detail_side():
+    return [[None] * 9 for _ in range(9)]
+
+
 class Level:
     def __init__(self, path):
         self.meta = {}
         self.detail = {
-            'front': [],
-            'back': [],
-            'left': [],
-            'right': [],
-            'up': [],
-            'down': [],
+            'front': _gen_detail_side(),
+            'back': _gen_detail_side(),
+            'left': _gen_detail_side(),
+            'right': _gen_detail_side(),
+            'up': _gen_detail_side(),
+            'down': _gen_detail_side(),
         }
         self.structure = []
 
@@ -103,8 +108,13 @@ class Level:
 
                     # check if type has known value type
                     for k in RE_META_VALUES:
-                        if RE_META_VALUES[k].match(value):
-                            # TODO extract value
+                        match = RE_META_VALUES[k].match(value)
+                        if match is not None:
+                            # extract value and pass along type information
+                            value = (
+                                k,
+                                match.group(1),
+                            )
                             break
                     else:
                         raise TypeError(
@@ -132,7 +142,7 @@ class Level:
                     raise ValueError("Expected edge on line", line_number)
 
                 # 4 normal short details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
                     match = RE_DETAIL_SHORT.match(line)
@@ -141,7 +151,11 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail['up'].append(match.groups())
+                    # self.detail['up'].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if not detail.strip():
+                            continue
+                        self.detail['up'][8-row][column] = detail
 
                 # center short details
                 line = f.next()
@@ -149,10 +163,13 @@ class Level:
                 match = RE_DETAIL_SHORT_CENTER.match(line)
                 if match is None:
                     raise ValueError("Expected details on line", line_number)
-                self.detail['up'].append(match.groups())
+                for column, detail in enumerate(match.groups()):
+                    if not detail.strip():
+                        continue
+                    self.detail['up'][8-4][column] = detail
 
                 # 4 normal short details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
                     match = RE_DETAIL_SHORT.match(line)
@@ -161,7 +178,9 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail['up'].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if detail.strip():
+                            self.detail['up'][8-5-row][column] = detail
 
                 # long delimiter
                 line = f.next()
@@ -170,7 +189,7 @@ class Level:
                     raise ValueError("Expected edge on line", line_number)
 
                 # 4 normal long details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
 
@@ -188,7 +207,17 @@ class Level:
                                 "Expected details on line",
                                 line_number,
                             )
-                        self.detail[side].append(match.groups())
+                        for column, detail in enumerate(match.groups()):
+                            if not detail.strip():
+                                continue
+                            elif side == 'left':
+                                self.detail[side][8-row][8-column] = detail
+                            elif side == 'front':
+                                self.detail[side][8-row][column] = detail
+                            elif side == 'right':
+                                self.detail[side][8-row][column] = detail
+                            elif side == 'back':
+                                self.detail[side][8-row][8-column] = detail
                         start = match.end(0)
 
                     if not re.match('|$', line, start):
@@ -215,7 +244,17 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail[side].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if not detail.strip():
+                            continue
+                        if side == 'left':
+                            self.detail[side][8-4][8-column] = detail
+                        elif side == 'front':
+                            self.detail[side][8-4][column] = detail
+                        elif side == 'right':
+                            self.detail[side][8-4][column] = detail
+                        elif side == 'back':
+                            self.detail[side][8-4][8-column] = detail
                     start = match.end(0)
 
                 if not re.match('|$', line, start):
@@ -225,7 +264,7 @@ class Level:
                     )
 
                 # 4 normal long details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
 
@@ -243,7 +282,17 @@ class Level:
                                 "Expected details on line",
                                 line_number,
                             )
-                        self.detail[side].append(match.groups())
+                        for column, detail in enumerate(match.groups()):
+                            if not detail.strip():
+                                continue
+                            if side == 'left':
+                                self.detail[side][8-5-row][8-column] = detail
+                            elif side == 'front':
+                                self.detail[side][8-5-row][column] = detail
+                            elif side == 'right':
+                                self.detail[side][8-5-row][column] = detail
+                            elif side == 'back':
+                                self.detail[side][8-5-row][8-column] = detail
                         start = match.end(0)
 
                     if not re.match('|$', line, start):
@@ -259,7 +308,7 @@ class Level:
                     raise ValueError("Expected edge on line", line_number)
 
                 # 4 normal short details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
                     match = RE_DETAIL_SHORT.match(line)
@@ -268,7 +317,10 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail['down'].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if not detail.strip():
+                            continue
+                        self.detail['down'][row][column] = detail
 
                 # center short details
                 line = f.next()
@@ -276,10 +328,13 @@ class Level:
                 match = RE_DETAIL_SHORT_CENTER.match(line)
                 if match is None:
                     raise ValueError("Expected details on line", line_number)
-                self.detail['down'].append(match.groups())
+                for column, detail in enumerate(match.groups()):
+                    if not detail.strip():
+                        continue
+                    self.detail['down'][4][column] = detail
 
                 # 4 normal short details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
                     match = RE_DETAIL_SHORT.match(line)
@@ -288,7 +343,10 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail['down'].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if not detail.strip():
+                            continue
+                        self.detail['down'][5+row][column] = detail
 
                 # short delimiter
                 line = f.next()
@@ -303,7 +361,7 @@ class Level:
             except StopIteration:
                 raise EOFError("Unexpected end of file")
 
-                # STRUCTURE #
+            # STRUCTURE #
 
             try:
                 while True:
@@ -327,9 +385,10 @@ class Level:
                             .format(structure_function),
                             line_number,
                         )
+                    structure_function = STRUCTURE_FUNCTIONS[structure_function]
+                    structure_entry = [structure_function]
 
                     # get points
-                    structure_entry = [structure_function]
                     for match in RE_STRUCTURE_POINT.finditer(
                             line,
                             match.end(0),
@@ -339,15 +398,15 @@ class Level:
                                 "Structure entry has invalid point",
                                 line_number,
                             )
-                        point = match.group(0)
 
-                        # TODO parse point
+                        point = match.group(0)
                         parts = point.split('_')
+
                         if parts[0] in POINT_AXES[0]:
                             if parts[1] in POINT_AXES[1]:
                                 if len(parts) == 2:
                                     # axes 1 2
-                                    pass
+                                    point = (parts[0], parts[1], 0)
                                 elif parts[2] not in POINT_AXES[2]:
                                     raise ValueError(
                                         "Expected axis 3 after axes 1, 2",
@@ -356,7 +415,7 @@ class Level:
                                     )
                                 else:
                                     # axes 1 2 3
-                                    pass
+                                    point = (parts[0], parts[1], parts[2])
                             elif parts[1] in POINT_AXES[2]:
                                 if len(parts) != 2:
                                     raise ValueError(
@@ -366,7 +425,7 @@ class Level:
                                     )
                                 else:
                                     # axes 1 3
-                                    pass
+                                    point = (parts[0], 0, parts[1])
                         elif parts[0] in POINT_AXES[1]:
                             if len(parts) != 2:
                                 raise ValueError(
@@ -382,7 +441,7 @@ class Level:
                                 )
                             else:
                                 # axes 2 3
-                                pass
+                                point = (0, parts[0], parts[1])
                         else:
                             raise ValueError(
                                 "Expected axis 1 or 2 at beginning",
@@ -390,9 +449,38 @@ class Level:
                                 line_number,
                             )
 
-                        structure_entry.append(point)
+                        # parse point
+                        point = tuple(
+                            (
+                                -1
+                                if POINT_AXES[i].index(x) == 0
+                                else
+                                1
+                            )
+                            if type(x) == unicode
+                            else x
+                            for i, x in enumerate(point)
+                        )
 
-                    # TODO check argument count with inspection
-                    self.structure.append(structure_entry)
+                        # convert roll/pitch/yaw to x/y/z
+                        structure_entry.append((
+                            point[1],
+                            point[0],
+                            point[2],
+                        ))
+
+                    # check argument count
+                    # both length are 1 above the actual count
+                    expected = len(inspect.getargspec(structure_entry[0])[0])
+                    actual = len(structure_entry)
+                    if expected != actual:
+                        raise ValueError(
+                            "Expected {} arguments for structure entry, got {}"
+                            .format(expected, actual),
+                            line,
+                            line_number
+                        )
+
+                    self.structure.append(tuple(structure_entry))
             except StopIteration:
                 pass
