@@ -56,7 +56,7 @@ RE_STRUCTURE_POINT = re.compile(r'[a-z]+_[a-z]+(?:_[a-z]+)?')
 POINT_AXES = [
     ['front', 'back'],
     ['left', 'right'],
-    ['down', 'up'],
+    ['bottom', 'top'],
 ]
 STRUCTURE_FUNCTIONS = {
     '*': structure.path,
@@ -73,8 +73,8 @@ def _gen_detail():
         'back': _gen_detail_side(),
         'left': _gen_detail_side(),
         'right': _gen_detail_side(),
-        'up': _gen_detail_side(),
-        'down': _gen_detail_side(),
+        'top': _gen_detail_side(),
+        'bottom': _gen_detail_side(),
     }
 
 
@@ -162,7 +162,7 @@ def parse_detail(lines):
             for column, detail in enumerate(match.groups()):
                 if not detail.strip():
                     continue
-                details['up'][8-row][column] = detail
+                details['top'][8-row][column] = detail
 
         # center short details
         line = lines.next()
@@ -172,7 +172,7 @@ def parse_detail(lines):
         for column, detail in enumerate(match.groups()):
             if not detail.strip():
                 continue
-            details['up'][8-4][column] = detail
+            details['top'][8-4][column] = detail
 
         # 4 normal short details
         for row in range(4):
@@ -182,7 +182,7 @@ def parse_detail(lines):
                 raise ValueError("Expected details", line)
             for column, detail in enumerate(match.groups()):
                 if detail.strip():
-                    details['up'][8-5-row][column] = detail
+                    details['top'][8-5-row][column] = detail
 
         # long delimiter
         line = lines.next()
@@ -286,7 +286,7 @@ def parse_detail(lines):
             for column, detail in enumerate(match.groups()):
                 if not detail.strip():
                     continue
-                details['down'][row][column] = detail
+                details['bottom'][row][column] = detail
 
         # center short details
         line = lines.next()
@@ -296,7 +296,7 @@ def parse_detail(lines):
         for column, detail in enumerate(match.groups()):
             if not detail.strip():
                 continue
-            details['down'][4][column] = detail
+            details['bottom'][4][column] = detail
 
         # 4 normal short details
         for row in range(4):
@@ -307,16 +307,12 @@ def parse_detail(lines):
             for column, detail in enumerate(match.groups()):
                 if not detail.strip():
                     continue
-                details['down'][5+row][column] = detail
+                details['bottom'][5+row][column] = detail
 
         # short delimiter
         line = lines.next()
         if not RE_DETAIL_SHORT_DELIMITER.match(line):
             raise ValueError("Expected edge", line)
-
-        line = lines.next()
-        if not RE_EMPTY.match(line):
-            raise ValueError("Expected empty line", line)
     except StopIteration:
         raise EOFError("Unexpected end of file")
 
