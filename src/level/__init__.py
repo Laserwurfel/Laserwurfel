@@ -67,16 +67,20 @@ STRUCTURE_FUNCTIONS = {
 }
 
 
+def _gen_detail_side():
+    return [[None] * 9 for _ in range(9)]
+
+
 class Level:
     def __init__(self, path):
         self.meta = {}
         self.detail = {
-            'front': [],
-            'back': [],
-            'left': [],
-            'right': [],
-            'up': [],
-            'down': [],
+            'front': _gen_detail_side(),
+            'back': _gen_detail_side(),
+            'left': _gen_detail_side(),
+            'right': _gen_detail_side(),
+            'up': _gen_detail_side(),
+            'down': _gen_detail_side(),
         }
         self.structure = []
 
@@ -138,7 +142,7 @@ class Level:
                     raise ValueError("Expected edge on line", line_number)
 
                 # 4 normal short details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
                     match = RE_DETAIL_SHORT.match(line)
@@ -147,7 +151,11 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail['up'].append(match.groups())
+                    # self.detail['up'].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if not detail.strip():
+                            continue
+                        self.detail['up'][8-row][column] = detail
 
                 # center short details
                 line = f.next()
@@ -155,10 +163,13 @@ class Level:
                 match = RE_DETAIL_SHORT_CENTER.match(line)
                 if match is None:
                     raise ValueError("Expected details on line", line_number)
-                self.detail['up'].append(match.groups())
+                for column, detail in enumerate(match.groups()):
+                    if not detail.strip():
+                        continue
+                    self.detail['up'][8-4][column] = detail
 
                 # 4 normal short details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
                     match = RE_DETAIL_SHORT.match(line)
@@ -167,7 +178,9 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail['up'].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if detail.strip():
+                            self.detail['up'][8-5-row][column] = detail
 
                 # long delimiter
                 line = f.next()
@@ -176,7 +189,7 @@ class Level:
                     raise ValueError("Expected edge on line", line_number)
 
                 # 4 normal long details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
 
@@ -194,7 +207,17 @@ class Level:
                                 "Expected details on line",
                                 line_number,
                             )
-                        self.detail[side].append(match.groups())
+                        for column, detail in enumerate(match.groups()):
+                            if not detail.strip():
+                                continue
+                            elif side == 'left':
+                                self.detail[side][8-row][8-column] = detail
+                            elif side == 'front':
+                                self.detail[side][8-row][column] = detail
+                            elif side == 'right':
+                                self.detail[side][8-row][column] = detail
+                            elif side == 'back':
+                                self.detail[side][8-row][8-column] = detail
                         start = match.end(0)
 
                     if not re.match('|$', line, start):
@@ -221,7 +244,17 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail[side].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if not detail.strip():
+                            continue
+                        if side == 'left':
+                            self.detail[side][8-4][8-column] = detail
+                        elif side == 'front':
+                            self.detail[side][8-4][column] = detail
+                        elif side == 'right':
+                            self.detail[side][8-4][column] = detail
+                        elif side == 'back':
+                            self.detail[side][8-4][8-column] = detail
                     start = match.end(0)
 
                 if not re.match('|$', line, start):
@@ -231,7 +264,7 @@ class Level:
                     )
 
                 # 4 normal long details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
 
@@ -249,7 +282,17 @@ class Level:
                                 "Expected details on line",
                                 line_number,
                             )
-                        self.detail[side].append(match.groups())
+                        for column, detail in enumerate(match.groups()):
+                            if not detail.strip():
+                                continue
+                            if side == 'left':
+                                self.detail[side][8-5-row][8-column] = detail
+                            elif side == 'front':
+                                self.detail[side][8-5-row][column] = detail
+                            elif side == 'right':
+                                self.detail[side][8-5-row][column] = detail
+                            elif side == 'back':
+                                self.detail[side][8-5-row][8-column] = detail
                         start = match.end(0)
 
                     if not re.match('|$', line, start):
@@ -265,7 +308,7 @@ class Level:
                     raise ValueError("Expected edge on line", line_number)
 
                 # 4 normal short details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
                     match = RE_DETAIL_SHORT.match(line)
@@ -274,7 +317,10 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail['down'].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if not detail.strip():
+                            continue
+                        self.detail['down'][row][column] = detail
 
                 # center short details
                 line = f.next()
@@ -282,10 +328,13 @@ class Level:
                 match = RE_DETAIL_SHORT_CENTER.match(line)
                 if match is None:
                     raise ValueError("Expected details on line", line_number)
-                self.detail['down'].append(match.groups())
+                for column, detail in enumerate(match.groups()):
+                    if not detail.strip():
+                        continue
+                    self.detail['down'][4][column] = detail
 
                 # 4 normal short details
-                for i in range(4):
+                for row in range(4):
                     line = f.next()
                     line_number += 1
                     match = RE_DETAIL_SHORT.match(line)
@@ -294,7 +343,10 @@ class Level:
                             "Expected details on line",
                             line_number,
                         )
-                    self.detail['down'].append(match.groups())
+                    for column, detail in enumerate(match.groups()):
+                        if not detail.strip():
+                            continue
+                        self.detail['down'][5+row][column] = detail
 
                 # short delimiter
                 line = f.next()
