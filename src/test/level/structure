@@ -1,1 +1,6 @@
 * front_left_top front_right_bottom
+! left_top
+-- right_top right_bottom
+[] front_right front_right_bottom
+% back_left_top back_bottom
+
