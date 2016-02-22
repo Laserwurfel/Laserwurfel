@@ -1,0 +1,41 @@
+title: "Test Level"
+track: ./assets/music/OGG files/lvl 1.ogg
+
+                   O--------()--------O
+                   |tl              tr|
+                   |                  |
+                   |                  |
+                   |                  |
+                   O                  O
+                   |                  |
+                   |                  |
+                   |                  |
+                   |bl              br|
+O--------()--------O--------()--------O--------()--------O--------()--------O
+|tl              tr|tl              tr|tl              tr|tl              tr|
+|                  |                  |                  |                  |
+|                  |                  |                  |                  |
+|                  |                  |                  |                  |
+O                  O                  O                  O                  O
+|                  |                  |                  |                  |
+|                  |                  |                  |                  |
+|                  |                  |                  |                  |
+|bl              br|bl              br|bl              br|bl              br|
+O--------()--------O--------()--------O--------()--------O--------()--------O
+                   |tl              tr|
+                   |                  |
+                   |                  |
+                   |                  |
+                   O                  O
+                   |                  |
+                   |                  |
+                   |                  |
+                   |bl              br|
+                   O--------()--------O
+
+* front_left_top front_right_bottom
+! front_top
+-- front_left front_bottom
+[] front_right front_right_bottom
+% front_left_bottom front_right_top
+
