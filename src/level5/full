@@ -1,0 +1,57 @@
+title: "Level 5"
+track: ./assets/music/OGG files/lvl 2.ogg
+
+                   O--------()--------O
+                   |tl              tr|
+                   |                  |
+                   |      []          |
+                   |        %%        |
+                   O                  O
+                   |                  |
+                   |                  |
+                   |                  |
+                   |bl              br|
+O--------()--------O--------()--------O--------()--------O--------()--------O
+|[]              tr|  @@            tr|tl              tr|tl              tr|
+|      %%          |@@@@              |                  |                  |
+|  %%              |@@@@@@      @@    |                  |     []  []       |
+|            %%    |@@@@@@@@@@@@@@@@  |        ##########|                  |
+O      %%  @@@@@@@@O@@@@@@@@  @@  @@  O        ##########O                  O
+|      @@      @@@@|      @@    @@@@@@|        ##########|         @@       |
+|  ####        @@@@|  @@  @@@@@@@@    |        ##########|           @@     |
+|  ####      @@@@@@|@@    @@@@  @@@@  |        ##########|                  |
+|bl      @@@@@@@@@@|@@@@@@@@  @@    br|bl      ##########|bl              br|
+O--------()--------O--------()--------O--------()--------O--------()--------O
+                   |tl              tr|
+                   |                  |
+                   |                  |
+                   |                  |
+                   O[]                O
+                   |                  |
+                   |                  |
+                   |            @@    |
+                   |bl              br|
+                   O--------()--------O
+
+* back_right_top right_bottom
+
+% back_bottom front_left_top
+
+! front_left_bottom
+! front_left_top
+! front_left
+! back_left_bottom
+! back_left
+! back_left_top
+! front_right_bottom
+! front_right_top
+! front_right
+! back_right_bottom
+! back_right
+! front_bottom
+! front_top
+! back_bottom
+! back_top
+
+[] right_top right_bottom front_left left_top
+
