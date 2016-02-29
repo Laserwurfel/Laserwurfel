@@ -1,5 +1,6 @@
 import wx
 import wx.lib.agw.gradientbutton as gb
+#import audio
 
 
 class Main(wx.Panel):
@@ -194,6 +195,7 @@ class MyFrame(wx.Frame):
         super(MyFrame, self).__init__(parent, title=title, size=(800, 700))
 
         self.panel = wx.Panel(self, wx.ID_ANY)
+        self.panel.SetBackgroundColour(((0,0,55)))
         self.SetBackgroundColour((0,0,55))
 
         self.mainMenu = Main(self)
@@ -251,10 +253,11 @@ class MyFrame(wx.Frame):
         self.Close()        
 
     def OnSwitch(self, event):
-        if event.GetEventObject() is self.btn_credits:
-           audio.play('../assets/music/OGG files/menu.ogg')
-        else:
-            audio.stop()
+        #if event.GetEventObject() is self.btn_credits:
+        #   audio.play('../assets/music/OGG files/menu.ogg')
+        #else:
+        #    audio.stop()
+        x = 1
 
     def OnReturn(self, event):
         self.settingsMenu.Hide()
@@ -274,13 +277,13 @@ class MyFrame(wx.Frame):
         self.settingsMenu.Hide()
         self.audioMenu.Hide()
         self.credits.Show()
-        audio.play('../assets/music/OGG files/credits.ogg') 
+        #audio.play('../assets/music/OGG files/credits.ogg') 
 
     def OnQuitCredits(self, event):
         self.credits.Hide()
         self.settingsMenu.Show()
-        audio.stop()
-        audio.play('../assets/music/OGG files/menu.ogg')
+        #audio.stop()
+        #audio.play('../assets/music/OGG files/menu.ogg')
 
     def OnReset(self, event):
         dial = wx.MessageDialog(None, 'Erase your progress?', 'Question', 
@@ -296,5 +299,5 @@ if __name__ == '__main__':
     app = wx.App()
     frame = MyFrame(None, title='Laserwurfel')
     frame.Show()
-    audio.play('../assets/music/OGG files/menu.ogg')
+    #audio.play('../assets/music/OGG files/menu.ogg')
     app.MainLoop()
