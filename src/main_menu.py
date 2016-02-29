@@ -1,6 +1,9 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import wx
-import wx.lib.agw.gradientbutton as gb
 #import audio
+import config
 
 
 class Main(wx.Panel):
@@ -33,7 +36,8 @@ class Main(wx.Panel):
         sizer.AddGrowableRow(3)
         sizer.AddGrowableRow(4)
 
-        self.SetSizerAndFit(sizer)    
+        self.SetSizerAndFit(sizer)
+
 
 class Settings(wx.Panel):
 
@@ -100,43 +104,128 @@ class AudioSettings(wx.Panel):
 
         self.SetSizerAndFit(vbox)
 
+
+# TODO: Add support for multiple key bindings
 class Keymapping(wx.Panel):
-    def __init__(self,parent):
+    def __init__(self, parent):
         wx.Panel.__init__(self, parent=parent)
+        self.SetBackgroundColour(((0, 0, 55)))
 
-        vbox = wx.BoxSizer(wx.VERTICAL)
-
-        sizer = wx.FlexGridSizer(3, 2, 5, 0)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         header = wx.StaticText(self, -1, 'Controls')
         font = wx.Font(30, wx.SWISS, wx.SLANT, wx.NORMAL)
         header.SetFont(font)
-        header.SetForegroundColour('White') 
+        header.SetForegroundColour('White')
+        self.buttons = []
 
-        leftTop = wx.StaticText(self, label="Auswahl des linken oberen Punktes")
-        topTop = wx.StaticText(self, label="Auswahl des obersten Punktes")
-        rightTop = wx.StaticText(self, label="Auswahl des rechten oberen Punktes")
-        leftTop.SetForegroundColour('White')
-        topTop.SetForegroundColour('White')
-        rightTop.SetForegroundColour('White')
+        self.sizer.Add(header, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 10)
 
-        self.btn_map1 = wx.Button(self, label="T", size=(50,50))
-        self.btn_map2 = wx.Button(self, label="Z", size=(50,50))
-        self.btn_map3 = wx.Button(self, label="U", size=(50,50))
-        
-        sizer.AddMany([
-            (self.btn_map1),
-            (leftTop),
-            (self.btn_map2),
-            (topTop),
-            (self.btn_map3),
-            (rightTop)
-            ])
+        buttons = [
+            ["TOPLEFT", "Selects the top left node."],
+            ["TOPCENTER", "Selects the top center node."],
+            ["TOPRIGHT", "Selects the top right node."],
+            ["MIDDLELEFT", "Selects the middle left node."],
+            ["MIDDLERIGHT", "Selects the middle right node."],
+            ["BOTTOMLEFT", "Selects the bottom left node."],
+            ["BOTTOMCENTER", "Selects the bottom center node."],
+            ["BOTTOMRIGHT", "Selects the bottom right node."],
+            ["ROTLEFT", "Rotate the cube left."],
+            ["ROTRIGHT", "Rotate the cube right."],
+            ["ROTUP", "Rotate the cube up."],
+            ["ROTDOWN", "Rotate the cube down."],
+            ["ROTCLOCK", "Rotate the camera clockwise."],
+            ["ROTCOUNTERCLOCK", "Rotate the camera counter-clockwise."],
+        ]
+        self.AddButtons(buttons)
+        self.UpdateButtons()
 
-        vbox.Add(header, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 10)
-        vbox.Add(sizer, 1, wx.ALL | wx.EXPAND, 10)
+        self.SetSizerAndFit(self.sizer)
 
-        self.SetSizerAndFit(vbox)
+    def AddButton(self, function, description):
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        txt_desc = wx.StaticText(
+            self,
+            label=description,
+            style=wx.ALIGN_CENTER_VERTICAL,
+        )
+        txt_desc.SetForegroundColour("White")
+        button = KeyButton(self, function=function)
+        self.buttons.append(button)
+        hbox.Add(
+            button,
+            0,
+            wx.EXPAND | wx.ALL,
+            border=10,
+        )
+        hbox.Add(
+            txt_desc,
+            1,
+        )
+        self.sizer.Add(hbox, 1, wx.EXPAND | wx.ALL, 10)
+
+    def AddButtons(self, buttons):
+        for button in buttons:
+            self.AddButton(button[0], button[1])
+
+    def UpdateButtons(self):
+        duplicates = {}
+        for button in self.buttons:
+            key = button.GetKey()
+            if key not in duplicates:
+                duplicates[key] = [button]
+            else:
+                duplicates[key].append(button)
+
+        for key, buttons in duplicates.iteritems():
+            if len(buttons) > 1:
+                for button in buttons:
+                    button.SetBackgroundColour("red")
+            else:
+                for button in buttons:
+                    button.SetBackgroundColour("white")
+
+
+class KeyButton(wx.Button):
+    def __init__(self, parent, size=(100, 50), function=None):
+        wx.Button.__init__(self, parent=parent, size=size)
+
+        self.function = function
+        self.key = config.parser.get("Controls", function)
+        self.SetLabel(self.key)
+        self.changing_key = False
+
+        self.Bind(wx.EVT_BUTTON, self.OnPressed)
+
+    def OnPressed(self, event):
+        self.SetLabel("Press key...")
+        self.changing_key = True
+        self.Bind(wx.EVT_CHAR, self.OnKeyPressed)
+
+    def OnKeyPressed(self, event):
+        if not self.changing_key:
+            return
+
+        if event.GetKeyCode() == wx.WXK_ESCAPE:
+            self.changing_key = False
+            self.SetLabel(self.key)
+            return
+
+        try:
+            self.key = str(chr(event.GetUniChar())).upper()
+        except:
+            return
+
+        self.GetParent().UpdateButtons()
+
+        self.SetLabel(self.key)
+        config.parser.set("Controls", self.function, self.key)
+        config.write()
+        self.changing_key = False
+
+    def GetKey(self):
+        return self.key
+
 
 class Credits(wx.Panel):
 
