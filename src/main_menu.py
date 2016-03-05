@@ -105,11 +105,15 @@ class AudioSettings(wx.Panel):
         self.SetSizerAndFit(vbox)
 
 
-# TODO: Add support for multiple key bindings
-class Keymapping(wx.Panel):
+# FIXME: Not scrollable because of reasons unknown to man
+class Keymapping(wx.ScrolledWindow):
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent=parent)
-        self.SetBackgroundColour(((0, 0, 55)))
+        wx.ScrolledWindow.__init__(self, parent=parent, style=wx.VSCROLL)
+        # self.SetScrollbars(1, 1, 1, 1)
+        self.SetScrollRate(100, 100)
+
+        self.bg_color = (0, 0, 55)
+        self.SetBackgroundColour(self.bg_color)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -150,10 +154,11 @@ class Keymapping(wx.Panel):
             style=wx.ALIGN_CENTER_VERTICAL,
         )
         txt_desc.SetForegroundColour("White")
-        button = KeyButton(self, function=function)
-        self.buttons.append(button)
+        button_pn = KeyButton(self, function=function)
+        for button in button_pn.GetButtons():
+            self.buttons.append(button)
         hbox.Add(
-            button,
+            button_pn,
             0,
             wx.EXPAND | wx.ALL,
             border=10,
@@ -171,7 +176,7 @@ class Keymapping(wx.Panel):
     def UpdateButtons(self):
         duplicates = {}
         for button in self.buttons:
-            key = button.GetKey()
+            key = button.GetLabelText()
             if key not in duplicates:
                 duplicates[key] = [button]
             else:
@@ -181,50 +186,106 @@ class Keymapping(wx.Panel):
             if len(buttons) > 1:
                 for button in buttons:
                     button.SetBackgroundColour("red")
+                    button.SetForegroundColour("white")
             else:
                 for button in buttons:
                     button.SetBackgroundColour("white")
+                    button.SetForegroundColour("black")
 
 
-class KeyButton(wx.Button):
-    def __init__(self, parent, size=(100, 50), function=None):
-        wx.Button.__init__(self, parent=parent, size=size)
+class KeyButton(wx.Panel):
+    def __init__(self, parent, function=None):
+
+        wx.Panel.__init__(self, parent=parent)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.SetBackgroundColour(self.GetParent().bg_color)
 
         self.function = function
-        self.key = config.parser.get("Controls", function)
-        self.SetLabel(self.key)
-        self.changing_key = False
+        self.keys = config.parser.get("Controls", function).split(",")
 
-        self.Bind(wx.EVT_BUTTON, self.OnPressed)
+        for key in self.keys:
+            btn = wx.Button(self, size=(100, 50), label=key)
+            self.Bind(wx.EVT_BUTTON, self.OnPressed, btn)
+            sizer.Add(btn, 0, wx.ALL, 5)
+
+        self.edit_btn = None
+        self.SetSizerAndFit(sizer)
 
     def OnPressed(self, event):
-        self.SetLabel("Press key...")
-        self.changing_key = True
-        self.Bind(wx.EVT_CHAR, self.OnKeyPressed)
+        btn = event.GetEventObject()
+        self.edit_key = btn.GetLabelText()
+        btn.SetLabel("Press key...")
+        self.edit_btn = btn
+        self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyPressed, btn)
 
     def OnKeyPressed(self, event):
-        if not self.changing_key:
+        if self.edit_btn is None:
             return
 
         if event.GetKeyCode() == wx.WXK_ESCAPE:
-            self.changing_key = False
-            self.SetLabel(self.key)
+            self.edit_btn.SetLabel(self.edit_key)
+            self.edit_btn = None
             return
 
         try:
-            self.key = str(chr(event.GetUniChar())).upper()
+            code = event.GetKeyCode()
+            char = str(chr(event.GetUniChar())).upper()
+            print code
+
+            if code in [375, 331]:
+                key = "NP_7"
+
+            elif code in [377, 332]:
+                key = "NP_8"
+
+            elif code in [380, 333]:
+                key = "NP_9"
+
+            elif code in [376, 328]:
+                key = "NP_4"
+
+            elif code in [383, 329]:
+                key = "NP_5"
+
+            elif code in [378, 330]:
+                key = "NP_6"
+
+            elif code in [382, 325]:
+                key = "NP_1"
+
+            elif code in [379, 326]:
+                key = "NP_2"
+
+            elif code in [382, 327]:
+                key = "NP_3"
+
+            else:
+                key = char
+
         except:
+            print "error"
             return
 
-        self.GetParent().UpdateButtons()
+        self.edit_btn.SetLabel(key)
 
-        self.SetLabel(self.key)
-        config.parser.set("Controls", self.function, self.key)
+        self.UpdateKeys()
+        config.parser.set("Controls", self.function, ",".join(self.keys))
         config.write()
-        self.changing_key = False
+        self.GetParent().UpdateButtons()
+        self.edit_btn = None
 
-    def GetKey(self):
-        return self.key
+    def GetKeys(self):
+        return self.keys
+
+    def GetButtons(self):
+        return self.GetChildren()
+
+    def UpdateKeys(self):
+        del self.keys
+        self.keys = []
+
+        for btn in self.GetButtons():
+            self.keys.append(btn.GetLabelText())
 
 
 class Credits(wx.Panel):
@@ -277,16 +338,12 @@ class Levelselection(wx.Panel):
         self.SetSizerAndFit(gridSizer)
 
 
-
 class MyFrame(wx.Frame):
 
     def __init__(self, parent, title):
         super(MyFrame, self).__init__(parent, title=title, size=(800, 700))
 
-        self.panel = wx.Panel(self, wx.ID_ANY)
-        self.panel.SetBackgroundColour(((0,0,55)))
-        self.SetBackgroundColour((0,0,55))
-
+        self.SetBackgroundColour((0, 0, 55))
         self.mainMenu = Main(self)
         self.settingsMenu = Settings(self)
         self.audioMenu = AudioSettings(self)
@@ -329,22 +386,21 @@ class MyFrame(wx.Frame):
         # Eventbinding for the Levelselection
         self.Bind(wx.EVT_BUTTON, self.OnReturnMain, self.levelList.btn_return)
 
-
     def OnCampaign(self, event):
         self.mainMenu.Hide()
-        self.levelList.Show()        
+        self.levelList.Show()
 
     def OnSettings(self, event):
         self.mainMenu.Hide()
         self.settingsMenu.Show()
 
     def OnQuit(self, event):
-        self.Close()        
+        self.Close()
 
     def OnSwitch(self, event):
-        #if event.GetEventObject() is self.btn_credits:
+        # if event.GetEventObject() is self.btn_credits:
         #   audio.play('../assets/music/OGG files/menu.ogg')
-        #else:
+        # else:
         #    audio.stop()
         x = 1
 
@@ -355,38 +411,37 @@ class MyFrame(wx.Frame):
         self.mainMenu.Show()
 
     def OnAudio(self, event):
-        self.audioMenu.Show() 
+        self.audioMenu.Show()
         self.keyMenu.Hide()
 
     def OnControls(self, event):
-        self.keyMenu.Show() 
-        self.settingsMenu.Hide()      
+        self.keyMenu.Show()
+        self.settingsMenu.Hide()
 
     def OnCredits(self, event):
         self.settingsMenu.Hide()
         self.audioMenu.Hide()
         self.credits.Show()
-        #audio.play('../assets/music/OGG files/credits.ogg') 
+        # audio.play('../assets/music/OGG files/credits.ogg') 
 
     def OnQuitCredits(self, event):
         self.credits.Hide()
         self.settingsMenu.Show()
-        #audio.stop()
-        #audio.play('../assets/music/OGG files/menu.ogg')
+        # audio.stop()
+        # audio.play('../assets/music/OGG files/menu.ogg')
 
     def OnReset(self, event):
-        dial = wx.MessageDialog(None, 'Erase your progress?', 'Question', 
-            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
-        dial.ShowModal()  
+        dial = wx.MessageDialog(None, 'Erase your progress?', 'Question',
+                                wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+        dial.ShowModal()
 
     def OnReturnMain(self, event):
         self.mainMenu.Show()
         self.levelList.Hide()
-            
 
 if __name__ == '__main__':
     app = wx.App()
     frame = MyFrame(None, title='Laserwurfel')
     frame.Show()
-    #audio.play('../assets/music/OGG files/menu.ogg')
+    # audio.play('../assets/music/OGG files/menu.ogg')
     app.MainLoop()
