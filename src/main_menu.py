@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import wx
-#import audio
+# import audio
 import config
+import keybinding
 
 
 class Main(wx.Panel):
 
-    def __init__(self,parent):
+    def __init__(self, parent):
         wx.Panel.__init__(self, parent=parent)
         sizer = wx.GridBagSizer(20, 20)
 
@@ -41,7 +42,7 @@ class Main(wx.Panel):
 
 class Settings(wx.Panel):
 
-    def __init__(self,parent):
+    def __init__(self, parent):
         wx.Panel.__init__(self, parent=parent)
         sizer = wx.GridBagSizer(20, 20)
 
@@ -70,12 +71,12 @@ class Settings(wx.Panel):
         sizer.AddGrowableRow(3)
         sizer.AddGrowableRow(4)
 
-
         self.SetSizerAndFit(sizer) 
+
 
 class AudioSettings(wx.Panel):
 
-    def __init__(self,parent):
+    def __init__(self, parent):
         wx.Panel.__init__(self, parent=parent)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -85,16 +86,20 @@ class AudioSettings(wx.Panel):
         header.SetFont(font)
         header.SetForegroundColour('White')
 
-
         volume = wx.StaticText(self, label="Volume")
         music = wx.StaticText(self, label="Music")
         volume.SetForegroundColour('White')
         music.SetForegroundColour('White')
 
+        self.volumeSlider = wx.Slider(
+            self, -1, 100, 0, 100,
+            style=wx.SL_HORIZONTAL)
 
-        self.volumeSlider = wx.Slider(self, -1, 100, 0, 100,
-            style = wx.SL_HORIZONTAL)
-        self.btn_musicSwitch = wx.Button(self, label='Turn Music Off', size=(250,50))
+        self.btn_musicSwitch = wx.Button(
+            self,
+            label='Turn Music Off',
+            size=(250, 50)
+        )
 
         vbox.Add(header, 1, wx.ALL, 10)
         vbox.Add(volume, 1, wx.ALL, 2)
@@ -106,6 +111,7 @@ class AudioSettings(wx.Panel):
 
 
 # FIXME: Not scrollable because of reasons unknown to man
+# TODO: AcceleratorTable
 class Keymapping(wx.ScrolledWindow):
     def __init__(self, parent):
         wx.ScrolledWindow.__init__(self, parent=parent, style=wx.VSCROLL)
@@ -350,11 +356,13 @@ class MyFrame(wx.Frame):
         self.keyMenu = Keymapping(self)
         self.credits = Credits(self)
         self.levelList = Levelselection(self)
+        self.keytest = keybinding.TestPanel(self)
         self.keyMenu.Hide()
         self.levelList.Hide()
         self.settingsMenu.Hide()
         self.audioMenu.Hide()
         self.credits.Hide()
+        self.keytest.Hide()
 
         self.sizer = wx.GridSizer(1, 2, 5, 5)
         self.sizer.Add(self.settingsMenu, 1)
@@ -415,7 +423,7 @@ class MyFrame(wx.Frame):
         self.keyMenu.Hide()
 
     def OnControls(self, event):
-        self.keyMenu.Show()
+        self.keytest.Show()
         self.settingsMenu.Hide()
 
     def OnCredits(self, event):
@@ -444,4 +452,6 @@ if __name__ == '__main__':
     frame = MyFrame(None, title='Laserwurfel')
     frame.Show()
     # audio.play('../assets/music/OGG files/menu.ogg')
+    # import wx.lib.inspection
+    # wx.lib.inspection.InspectionTool().Show()
     app.MainLoop()
