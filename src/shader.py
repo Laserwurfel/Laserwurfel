@@ -1,31 +1,64 @@
+import os.path
+
+import OpenGL.constant
 from OpenGL.GL import *
 
 
-def compile(path, shader_type):
-    with open(path) as f:
-        source = f.read()
-    shader = glCreateShader(shader_type)
-    glShaderSource(shader, source)
-    glCompileShader(shader)
-    if glGetShaderiv(shader, GL_COMPILE_STATUS) != GL_TRUE:
-        raise RuntimeError(
-            'Could not compile shader',
-            glGetShaderInfoLog(shader),
-        )
-    return shader
-
-
-def program(*shaders):
-    shader_program = glCreateProgram()
-
+def program(shaders):
     for shader in shaders:
-        glAttachShader(shader_program, shader)
+        if not type(shader) == tuple:
+            raise TypeError("Expected a tuple", shader)
+        if not len(shader) == 2:
+            raise TypeError("Expected a pair", shader)
 
-    glLinkProgram(shader_program)
+        if not isinstance(shader[0], basestring):
+            raise TypeError("Expected first element to be a string", shader)
+        if not os.path.isfile(shader[0]):
+            raise ValueError("Expected first elements to be a file", shader)
+        if not os.path.splitext(shader[0])[1] == ".glsl":
+            raise ValueError(
+                "Expected first element to be a .glsl file",
+                shader,
+            )
 
-    if glGetProgramiv(shader_program, GL_LINK_STATUS) != GL_TRUE:
-        info = glGetProgramInfoLog(shader_program)
-        glDeleteProgram(shader_program)
+        if not isinstance(shader[1], OpenGL.constant.IntConstant):
+            raise TypeError(
+                "Expected second element to be an OpenGL constant",
+                shader,
+            )
+        if not shader[1] in (
+            GL_VERTEX_SHADER,
+            GL_GEOMETRY_SHADER,
+            GL_FRAGMENT_SHADER,
+        ):
+            raise ValueError(
+                "Expected second element to be a valid shader stage",
+                shader,
+            )
+
+    for index, (path, stage) in enumerate(shaders):
+        with open(path, 'r') as f:
+            source = f.read()
+        shader = glCreateShader(stage)
+        glShaderSource(shader, source)
+        glCompileShader(shader)
+        if glGetShaderiv(shader, GL_COMPILE_STATUS) != GL_TRUE:
+            raise RuntimeError(
+                'Could not compile shader',
+                stage,
+                glGetShaderInfoLog(shader),
+            )
+
+        shaders[index] = shader
+
+    program = glCreateProgram()
+    for shader in shaders:
+        glAttachShader(program, shader)
+    glLinkProgram(program)
+
+    if glGetProgramiv(program, GL_LINK_STATUS) != GL_TRUE:
+        info = glGetProgramInfoLog(program)
+        glDeleteProgram(program)
         for shader in shaders:
             glDeleteShader(shader)
         raise RuntimeError(
@@ -36,4 +69,4 @@ def program(*shaders):
     for shader in shaders:
         glDeleteShader(shader)
 
-    return shader_program
+    return program

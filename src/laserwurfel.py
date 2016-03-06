@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import os.path
+
 import glfw
 from OpenGL.GL import *
 
@@ -22,7 +23,7 @@ def main():
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-    glfw.window_hint(glfw.RESIZABLE, False)
+    glfw.window_hint(glfw.RESIZABLE, GL_FALSE)
 
     glfw.set_error_callback(callback.error)
 
@@ -35,27 +36,28 @@ def main():
 
     glfw.set_key_callback(window, callback.key)
 
-    # load shaders
-    shader_program = shader.program(
-        shader.compile('src/shaders/vertex.glsl', GL_VERTEX_SHADER),
-        shader.compile('src/shaders/fragment.glsl', GL_FRAGMENT_SHADER),
-    )
+    glViewport(0, 0, 640, 480)
 
-    # load models
-    (cube, faces) = model.import_asset('assets/models/game_elements/cube_01.blend')
+    # create and load shaders
+    program = shader.program([
+        ('src/shaders/vertex.glsl', GL_VERTEX_SHADER),
+        ('src/shaders/fragment.glsl', GL_FRAGMENT_SHADER),
+    ])
 
-    while not glfw.window_should_close(window):
-        glfw.poll_events()
+    # glfw.swap_interval(1)
 
-        glClearColor(0.0, 0.5, 1.0, 1.0)  # TODO proper background color
-        glClear(GL_COLOR_BUFFER_BIT)
+    cube = model.Asset('assets/models/game_elements/cube_01.blend')
+    with cube as cube:
+        while not glfw.window_should_close(window):
+            glfw.poll_events()
 
-        glUseProgram(shader_program)
-        glBindVertexArray(cube)
-        glDrawElements(GL_TRIANGLES, faces, GL_UNSIGNED_INT, 0)
-        glBindVertexArray(0)
+            glClearColor(0.0, 0.5, 1.0, 1.0)
+            glClear(GL_COLOR_BUFFER_BIT)
 
-        glfw.swap_buffers(window)
+            glUseProgram(program)
+            cube()
+
+            glfw.swap_buffers(window)
 
     glfw.terminate()
     return True
