@@ -1,0 +1,57 @@
+title: "Level 8"
+track: ./assets/music/OGG files/lvl 1.ogg
+
+                   O--------()--------O
+                   |@@      @@      tr|
+                   |        @@      @@|
+                   |@@      @@        |
+                   |        @@      @@|
+                   O@@      @@        O
+                   |        @@      @@|
+                   |@@      @@        |
+                   |        @@      @@|
+                   |@@      @@      br|
+O--------()--------O--------()--------O--------()--------O--------()--------O
+|tl@@  @@  @@  @@tr|@@      @@      @@|@@  @@  @@  @@  @@|@@      @@      @@|
+|                  |  @@    @@    @@  |                  |  @@    @@    @@  |
+|                  |    @@  @@  @@    |        []        |    @@  @@  @@    |
+|          %%      |      @@@@@@      |                  |      @@@@@@      |
+O@@@@@@@@@@@@@@@@@@O@@@@@@@@  @@@@@@@@O@@@@@@@@@@@@@@@@@@O@@@@@@@@  @@@@@@@@O
+|                  |      @@@@@@      |                  |      @@@@@@      |
+|            %%    |    @@  @@  @@    |        []        |    @@  @@  @@    |
+|        %%        |  @@    @@    @@  |                  |  @@    @@    @@  |
+|@@  @@  @@  @@  @@|@@      @@      @@|bl@@  @@  @@  @@br|@@      @@      @@|
+O--------()--------O--------()--------O--------()--------O--------()--------O
+                   |tl      @@      @@|
+                   |@@      @@        |
+                   |        @@      @@|
+                   |@@      @@        |
+                   O        @@      @@O
+                   |@@      @@        |
+                   |        @@      @@|
+                   |@@      @@        |
+                   |bl      @@      @@|
+                   O--------()--------O
+
+* front_left back_left
+
+[] front_left left_top
+[] front_bottom back_bottom left_top left_bottom
+[] back_right back_left front_left front_right
+
+% front_right left_top
+% left_bottom front_bottom
+% back_right back_bottom
+
+! front_top
+! front_left_bottom
+! front_left_top
+! front_right_top
+! front_right_bottom
+! back_top
+! back_left_top
+! back_left_bottom
+! back_right_top
+! back_right_bottom
+! right_top
+! right_bottom

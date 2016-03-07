@@ -1,5 +1,5 @@
-title: "Test Level"
-track: ./assets/music/OGG files/lvl 1.ogg
+title: "Level 7"
+track: ./assets/music/OGG files/lvl 2.ogg
 
                    O--------()--------O
                    |[]  @@      @@  %%|
@@ -33,21 +33,23 @@ O--------()--------O--------()--------O--------()--------O--------()--------O
                    |[]  @@      @@  %%|
                    O--------()--------O
 
-* front_left_top right_bottom
+* front_top front_bottom
+
+[] front_top front_bottom
+[] left_top right_top front_top back_top
+[] left_top front_top
+[] left_top back_top
+
+% left_top back_bottom
 
 
-
-
-! front_top
-! front_bottom
 ! front_left
 ! front_left_bottom
 ! front_left_top
 ! front_right
 ! front_right_top
 ! front_right_bottom
-! back_top
-! back_front
+! back_bottom
 ! back_left
 ! back_left_top
 ! back_left_bottom

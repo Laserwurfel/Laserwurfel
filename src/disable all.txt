@@ -7,7 +7,7 @@
 ! front_right_top
 ! front_right_bottom
 ! back_top
-! back_front
+! back_bottom
 ! back_left
 ! back_left_top
 ! back_left_bottom
