@@ -35,6 +35,8 @@ def main():
     glfw.make_context_current(window)
 
     glfw.set_key_callback(window, callback.key)
+    glfw.set_mouse_button_callback(window, callback.mousebutton)
+    glfw.set_cursor_pos_callback(window, callback.mouseposition)
 
     glViewport(0, 0, 640, 480)
 
@@ -46,19 +48,19 @@ def main():
 
     # glfw.swap_interval(1)
 
-    cube = model.Asset('assets/models/game_elements/cube_01.blend')
-    with cube as cube:
-        while not glfw.window_should_close(window):
-            glfw.poll_events()
+    cube = model.Asset('assets/models/game_elements/cube_01.obj')
 
-            glClearColor(0.0, 0.5, 1.0, 1.0)
-            glClear(GL_COLOR_BUFFER_BIT)
+    # with cube as cube:
+    while not glfw.window_should_close(window):
+        glfw.poll_events()
 
-            glUseProgram(program)
-            cube()
+        glClearColor(0.0, 0.5, 1.0, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT)
 
-            glfw.swap_buffers(window)
+        glUseProgram(program)
+        # cube()
 
+        glfw.swap_buffers(window)
     glfw.terminate()
     return True
 

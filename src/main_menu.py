@@ -4,7 +4,6 @@
 import wx
 # import audio
 import config
-import keybinding
 
 
 class Main(wx.Panel):
@@ -111,7 +110,6 @@ class AudioSettings(wx.Panel):
 
 
 # FIXME: Not scrollable because of reasons unknown to man
-# TODO: AcceleratorTable
 class Keymapping(wx.ScrolledWindow):
     def __init__(self, parent):
         wx.ScrolledWindow.__init__(self, parent=parent, style=wx.VSCROLL)
@@ -124,12 +122,19 @@ class Keymapping(wx.ScrolledWindow):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         header = wx.StaticText(self, -1, 'Controls')
+        btn_back = wx.Button(self, label="Back")
+        self.Bind(wx.EVT_BUTTON, self.OnBack, btn_back)
+        header_sz = wx.BoxSizer(wx.HORIZONTAL)
+        header_sz.Add(header, 0, wx.ALL | wx.EXPAND, 10)
+        header_sz.AddSpacer(10)
+        header_sz.Add(btn_back, 0, wx.ALL | wx.EXPAND, 10)
+
         font = wx.Font(30, wx.SWISS, wx.SLANT, wx.NORMAL)
         header.SetFont(font)
         header.SetForegroundColour('White')
         self.buttons = []
 
-        self.sizer.Add(header, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 10)
+        self.sizer.Add(header_sz, 1, wx.ALL | wx.EXPAND)
 
         buttons = [
             ["TOPLEFT", "Selects the top left node."],
@@ -149,8 +154,19 @@ class Keymapping(wx.ScrolledWindow):
         ]
         self.AddButtons(buttons)
         self.UpdateButtons()
+        self.Bind(wx.EVT_SIZE, self.OnSize)
 
         self.SetSizerAndFit(self.sizer)
+        self.Layout()
+
+    def OnSize(self, event):
+        size = self.GetSize()
+        vsize = self.GetVirtualSize()
+        self.SetVirtualSize((size[0], vsize[1]))
+
+    def OnBack(self, event):
+        self.Hide()
+        self.GetParent().settingsMenu.Show()
 
     def AddButton(self, function, description):
         hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -356,13 +372,11 @@ class MyFrame(wx.Frame):
         self.keyMenu = Keymapping(self)
         self.credits = Credits(self)
         self.levelList = Levelselection(self)
-        self.keytest = keybinding.TestPanel(self)
         self.keyMenu.Hide()
         self.levelList.Hide()
         self.settingsMenu.Hide()
         self.audioMenu.Hide()
         self.credits.Hide()
-        self.keytest.Hide()
 
         self.sizer = wx.GridSizer(1, 2, 5, 5)
         self.sizer.Add(self.settingsMenu, 1)
@@ -423,7 +437,7 @@ class MyFrame(wx.Frame):
         self.keyMenu.Hide()
 
     def OnControls(self, event):
-        self.keytest.Show()
+        self.keyMenu.Show()
         self.settingsMenu.Hide()
 
     def OnCredits(self, event):

@@ -3,7 +3,7 @@
 
 import ConfigParser
 
-cfgfile = "../config.cfg"
+cfgfile = "config.cfg"
 
 parser = ConfigParser.SafeConfigParser()
 parser.read(cfgfile)
