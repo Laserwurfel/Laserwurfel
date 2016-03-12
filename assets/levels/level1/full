@@ -1,5 +1,5 @@
 title: "Level 1"
-track: ./assets/music/OGG files/lvl 1.ogg
+track: "lvl1.ogg"
 
                    O--------()--------O
                    |tl      @@      tr|
@@ -44,7 +44,7 @@ O--------()--------O--------()--------O--------()--------O--------()--------O
 ! front_right
 ! front_right_bottom
 ! back_top
-! back_front
+! back_bottom
 ! back_left
 ! back_left_bottom
 ! back_right

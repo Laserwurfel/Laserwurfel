@@ -4,6 +4,12 @@
 import wx
 # import audio
 import config
+<<<<<<< HEAD
+=======
+import keybinding
+import wx.lib.agw.gradientbutton as GB
+
+>>>>>>> e92fc9f1665abc75a8e90ceb3e598d94362a21ee
 
 
 class Main(wx.Panel):
@@ -12,18 +18,27 @@ class Main(wx.Panel):
         wx.Panel.__init__(self, parent=parent)
         sizer = wx.GridBagSizer(20, 20)
 
+        btn_bgcolor = wx.Colour(255,255,255)
+        btn_fgcolor = wx.Colour(0,0,0)
+
         header = wx.StaticText(self, -1, 'LASERWURFEL')
         font = wx.Font(35, wx.SWISS, wx.SLANT, wx.NORMAL)
         header.SetFont(font)
         header.SetForegroundColour('White')
 
-        self.btn_main_menu = wx.Button(self, label='Campaign', size=(250, 50))
-        self.btn_endless = wx.Button(self, label='Endless', size=(250, 50))
-        self.btn_controls = wx.Button(self, label='Settings', size=(250, 50))
-        self.btn_resume = wx.Button(self, label='Resume last saved game', size=(250, 50))
-        self.btn_quit = wx.Button(self, label='Quit', size=(250, 50))
+        self.btn_main_menu = GB.GradientButton(self, label="Campaign", size=(350, 50))
+        self.btn_endless = GB.GradientButton(self, label="Endless", size=(350, 50))
+        self.btn_controls = GB.GradientButton(self, label="Settings", size=(350, 50))
+        self.btn_resume = GB.GradientButton(self, label="Resume last saved game", size=(350, 50))
+        self.btn_quit = GB.GradientButton(self, label="Quit", size=(350, 50))
 
-        sizer.Add(header, pos=(0,0), span=(1,5), flag=wx.LEFT|wx.TOP, border=10)
+        self.setColor(self.btn_main_menu, btn_bgcolor, btn_fgcolor)
+        self.setColor(self.btn_endless, btn_bgcolor, btn_fgcolor)
+        self.setColor(self.btn_controls, btn_bgcolor, btn_fgcolor)
+        self.setColor(self.btn_resume, btn_bgcolor, btn_fgcolor)
+        self.setColor(self.btn_quit, btn_bgcolor, btn_fgcolor)
+
+        sizer.Add(header, pos=(0,0), span=(1,5), flag=wx.LEFT|wx.TOP|wx.BOTTOM, border=10)
         sizer.Add(self.btn_main_menu, pos=(1,0), span=(1,2), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=10)
         sizer.Add(self.btn_endless, pos = (2,0), span=(1,2), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=10)
         sizer.Add(self.btn_controls, pos = (3,0), span=(1,2), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=10)
@@ -38,6 +53,16 @@ class Main(wx.Panel):
 
         self.SetSizerAndFit(sizer)
 
+    @staticmethod
+    def setColor(button, bg_color, fg_color):
+        button.SetBottomEndColour(bg_color)
+        button.SetBottomStartColour(bg_color)
+        button.SetTopEndColour(bg_color)
+        button.SetTopStartColour(bg_color)
+        button.SetForegroundColour(fg_color)
+        button.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL,0))
+        button.SetPressedBottomColour(bg_color)
+        button.SetPressedTopColour(bg_color)
 
 class Settings(wx.Panel):
 
@@ -45,17 +70,21 @@ class Settings(wx.Panel):
         wx.Panel.__init__(self, parent=parent)
         sizer = wx.GridBagSizer(20, 20)
 
+        btn_bgcolor = wx.Colour(255,255,255)
+        btn_fgcolor = wx.Colour(0,0,0)
+        btn_font_size = 25
+
         header = wx.StaticText(self, -1, 'Settings')
         font = wx.Font(30, wx.SWISS, wx.SLANT, wx.NORMAL)
         header.SetFont(font)
         header.SetForegroundColour('White')
 
 
-        self.btn_audio = wx.Button(self, label='Audio', size=(250, 50))
-        self.btn_controls = wx.Button(self, label='Controls', size=(250, 50))
-        self.btn_reset = wx.Button(self, label='Reset Game', size=(250, 50))
-        self.btn_credits = wx.Button(self, label='Credits', size=(250, 50))
-        self.btn_return = wx.Button(self, label='Return to main menu', size=(250, 50))
+        self.btn_audio = GB.GradientButton(self, label="Audio", size=(350, 50))
+        self.btn_controls = GB.GradientButton(self, label="Controls", size=(350, 50))
+        self.btn_reset = GB.GradientButton(self, label="Reset Game", size=(350, 50))
+        self.btn_credits = GB.GradientButton(self, label="Credits", size=(350, 50))
+        self.btn_return = GB.GradientButton(self, label="Return to main menu", size=(350, 50))
 
         sizer.Add(header, pos=(0,0), span=(1,5), flag=wx.LEFT|wx.TOP, border=10)
         sizer.Add(self.btn_audio, pos=(1,0), span=(1,2), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=10)
@@ -63,6 +92,12 @@ class Settings(wx.Panel):
         sizer.Add(self.btn_reset, pos = (3,0), span=(1,2), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=10)
         sizer.Add(self.btn_credits, pos = (4,0), span=(1,2), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=10)
         sizer.Add(self.btn_return, pos = (5,0), span=(1,2), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=10)
+
+        self.setColor(self.btn_audio, btn_bgcolor, btn_fgcolor)
+        self.setColor(self.btn_controls, btn_bgcolor, btn_fgcolor)
+        self.setColor(self.btn_reset, btn_bgcolor, btn_fgcolor)
+        self.setColor(self.btn_credits, btn_bgcolor, btn_fgcolor)
+        self.setColor(self.btn_return, btn_bgcolor, btn_fgcolor)
 
         sizer.AddGrowableRow(0)
         sizer.AddGrowableRow(1)
@@ -72,6 +107,17 @@ class Settings(wx.Panel):
 
         self.SetSizerAndFit(sizer) 
 
+    @staticmethod
+    def setColor(button, bg_color, fg_color):
+        button.SetBottomEndColour(bg_color)
+        button.SetBottomStartColour(bg_color)
+        button.SetTopEndColour(bg_color)
+        button.SetTopStartColour(bg_color)
+        button.SetForegroundColour(fg_color)
+        button.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL,0))
+        button.SetPressedBottomColour(bg_color)
+        button.SetPressedTopColour(bg_color)
+
 
 class AudioSettings(wx.Panel):
 
@@ -79,6 +125,9 @@ class AudioSettings(wx.Panel):
         wx.Panel.__init__(self, parent=parent)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
+
+        btn_bgcolor = wx.Colour(255,255,255)
+        btn_fgcolor = wx.Colour(0,0,0)
 
         header = wx.StaticText(self, -1, 'Audio')
         font = wx.Font(30, wx.SWISS, wx.SLANT, wx.NORMAL)
@@ -94,20 +143,28 @@ class AudioSettings(wx.Panel):
             self, -1, 100, 0, 100,
             style=wx.SL_HORIZONTAL)
 
-        self.btn_musicSwitch = wx.Button(
-            self,
-            label='Turn Music Off',
-            size=(250, 50)
-        )
+        self.btn_music_switch = GB.GradientButton(self, label="Turn Music Off", size=(350, 50))
+
+        self.setColor(self.btn_music_switch, btn_bgcolor, btn_fgcolor)
 
         vbox.Add(header, 1, wx.ALL, 10)
         vbox.Add(volume, 1, wx.ALL, 2)
         vbox.Add(self.volumeSlider, 1, wx.EXPAND | wx.ALL, 2)
         vbox.Add(music, 1, wx.ALL, 2)
-        vbox.Add(self.btn_musicSwitch, 1, wx.EXPAND | wx.ALL, 2)
+        vbox.Add(self.btn_music_switch, 1, wx.EXPAND | wx.ALL, 2)
 
         self.SetSizerAndFit(vbox)
 
+    @staticmethod
+    def setColor(button, bg_color, fg_color):
+        button.SetBottomEndColour(bg_color)
+        button.SetBottomStartColour(bg_color)
+        button.SetTopEndColour(bg_color)
+        button.SetTopStartColour(bg_color)
+        button.SetForegroundColour(fg_color)
+        button.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL,0))
+        button.SetPressedBottomColour(bg_color)
+        button.SetPressedTopColour(bg_color)
 
 # FIXME: Not scrollable because of reasons unknown to man
 class Keymapping(wx.ScrolledWindow):
@@ -338,6 +395,9 @@ class Levelselection(wx.Panel):
 
         sizer = wx.FlexGridSizer(6, 5, 20, 50)
 
+        btn_bgcolor = wx.Colour(255,255,255)
+        btn_fgcolor = wx.Colour(0,0,0)
+
         header = wx.StaticText(self, -1, 'Campaign')
         font = wx.Font(30, wx.SWISS, wx.NORMAL, wx.NORMAL)
         header.SetFont(font)
@@ -346,10 +406,22 @@ class Levelselection(wx.Panel):
         self.btn_level = []
         gridSizer.Add(header, pos=(0,0), span=(1,1), flag=wx.LEFT|wx.TOP, border=10)
         for x in range(0,20):
-            self.btn_level.append(wx.Button(self, label='Level ' + str(x+1), size=(100, 100)))
+            self.btn_level.append(GB.GradientButton(self, label='Level ' + str(x+1), size=(100, 100)))
             sizer.Add(self.btn_level[x], 1, wx.EXPAND)
+
+            self.btn_level[x].SetBottomEndColour(btn_bgcolor)
+            self.btn_level[x].SetBottomStartColour(btn_bgcolor)
+            self.btn_level[x].SetTopEndColour(btn_bgcolor)
+            self.btn_level[x].SetTopStartColour(btn_bgcolor)
+            self.btn_level[x].SetForegroundColour(btn_fgcolor)
+            self.btn_level[x].SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL,0))
+            self.btn_level[x].SetPressedBottomColour(btn_bgcolor)
+            self.btn_level[x].SetPressedTopColour(btn_bgcolor)
+
             if x > 3:
                 self.btn_level[x].Enable(False)
+                btn_bgcolor = wx.Colour(128,128,128)
+                btn_fgcolor = wx.Colour(255,255,255)
 
         self.btn_return = wx.Button(self, label='Return to main menu', size=(50, 50))
 
@@ -400,7 +472,7 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnReset, self.settingsMenu.btn_reset)
 
         # Eventbindings for the Buttons in the audio settings
-        self.Bind(wx.EVT_BUTTON, self.OnSwitch, self.audioMenu.btn_musicSwitch)
+        self.Bind(wx.EVT_BUTTON, self.OnSwitch, self.audioMenu.btn_music_switch)
 
         # Eventbinding for the Credits
         self.Bind(wx.EVT_BUTTON, self.OnQuitCredits, self.credits.btn_return)

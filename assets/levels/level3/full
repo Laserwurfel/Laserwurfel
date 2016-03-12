@@ -1,5 +1,5 @@
 title: "Level 3"
-track: ./assets/music/OGG files/lvl 2.ogg
+track: "lvl2.ogg"
 
                    O--------()--------O
                    |############    tr|
@@ -48,8 +48,8 @@ O--------()--------O--------()--------O--------()--------O--------()--------O
 ! front_left_top
 ! front_right
 ! front_right_top
+! back_bottom
 ! front_right_bottom
-! back_front
 ! back_left_bottom
 ! back_right_top
 ! left_top
