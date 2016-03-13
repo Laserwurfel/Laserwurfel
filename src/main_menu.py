@@ -4,12 +4,8 @@
 import wx
 # import audio
 import config
-<<<<<<< HEAD
-=======
-import keybinding
 import wx.lib.agw.gradientbutton as GB
 
->>>>>>> e92fc9f1665abc75a8e90ceb3e598d94362a21ee
 
 
 class Main(wx.Panel):
@@ -60,7 +56,7 @@ class Main(wx.Panel):
         button.SetTopEndColour(bg_color)
         button.SetTopStartColour(bg_color)
         button.SetForegroundColour(fg_color)
-        button.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL,0))
+        # button.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL,0))
         button.SetPressedBottomColour(bg_color)
         button.SetPressedTopColour(bg_color)
 
@@ -114,7 +110,7 @@ class Settings(wx.Panel):
         button.SetTopEndColour(bg_color)
         button.SetTopStartColour(bg_color)
         button.SetForegroundColour(fg_color)
-        button.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL,0))
+        # button.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL,0))
         button.SetPressedBottomColour(bg_color)
         button.SetPressedTopColour(bg_color)
 
@@ -162,7 +158,7 @@ class AudioSettings(wx.Panel):
         button.SetTopEndColour(bg_color)
         button.SetTopStartColour(bg_color)
         button.SetForegroundColour(fg_color)
-        button.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL,0))
+        # button.SetFont(wx.Font(25, wx.DEFAULT, wx.NORMAL,0))
         button.SetPressedBottomColour(bg_color)
         button.SetPressedTopColour(bg_color)
 
@@ -414,7 +410,7 @@ class Levelselection(wx.Panel):
             self.btn_level[x].SetTopEndColour(btn_bgcolor)
             self.btn_level[x].SetTopStartColour(btn_bgcolor)
             self.btn_level[x].SetForegroundColour(btn_fgcolor)
-            self.btn_level[x].SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL,0))
+            # self.btn_level[x].SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL,0))
             self.btn_level[x].SetPressedBottomColour(btn_bgcolor)
             self.btn_level[x].SetPressedTopColour(btn_bgcolor)
 
@@ -450,9 +446,10 @@ class MyFrame(wx.Frame):
         self.audioMenu.Hide()
         self.credits.Hide()
 
-        self.sizer = wx.GridSizer(1, 2, 5, 5)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.settingsMenu, 1)
         self.sizer.Add(self.audioMenu, 1)
+        self.sizer.Add(self.keyMenu, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
 
         # Eventbindings for the Buttons in the Main tab
@@ -511,6 +508,8 @@ class MyFrame(wx.Frame):
     def OnControls(self, event):
         self.keyMenu.Show()
         self.settingsMenu.Hide()
+        self.Layout()
+        self.Refresh()
 
     def OnCredits(self, event):
         self.settingsMenu.Hide()
