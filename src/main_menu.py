@@ -162,6 +162,7 @@ class AudioSettings(wx.Panel):
         button.SetPressedBottomColour(bg_color)
         button.SetPressedTopColour(bg_color)
 
+
 # FIXME: Not scrollable because of reasons unknown to man
 class Keymapping(wx.ScrolledWindow):
     def __init__(self, parent):
@@ -279,7 +280,7 @@ class KeyButton(wx.Panel):
         self.keys = config.parser.get("Controls", function).split(",")
 
         for key in self.keys:
-            btn = wx.Button(self, size=(100, 50), label=key)
+            btn = wx.Button(self, size=(100, 50), label=key.upper())
             self.Bind(wx.EVT_BUTTON, self.OnPressed, btn)
             sizer.Add(btn, 0, wx.ALL, 5)
 
@@ -304,35 +305,35 @@ class KeyButton(wx.Panel):
 
         try:
             code = event.GetKeyCode()
-            char = str(chr(event.GetUniChar())).upper()
+            char = str(chr(event.GetUniChar())).lower()
             print code
 
             if code in [375, 331]:
-                key = "NP_7"
+                key = "7"
 
             elif code in [377, 332]:
-                key = "NP_8"
+                key = "8"
 
             elif code in [380, 333]:
-                key = "NP_9"
+                key = "9"
 
             elif code in [376, 328]:
-                key = "NP_4"
+                key = "4"
 
             elif code in [383, 329]:
-                key = "NP_5"
+                key = "5"
 
             elif code in [378, 330]:
-                key = "NP_6"
+                key = "6"
 
             elif code in [382, 325]:
-                key = "NP_1"
+                key = "1"
 
             elif code in [379, 326]:
-                key = "NP_2"
+                key = "2"
 
             elif code in [382, 327]:
-                key = "NP_3"
+                key = "3"
 
             else:
                 key = char
@@ -341,7 +342,7 @@ class KeyButton(wx.Panel):
             print "error"
             return
 
-        self.edit_btn.SetLabel(key)
+        self.edit_btn.SetLabel(key.upper())
 
         self.UpdateKeys()
         config.parser.set("Controls", self.function, ",".join(self.keys))
@@ -360,7 +361,7 @@ class KeyButton(wx.Panel):
         self.keys = []
 
         for btn in self.GetButtons():
-            self.keys.append(btn.GetLabelText())
+            self.keys.append(btn.GetLabelText().lower())
 
 
 class Credits(wx.Panel):
