@@ -1,69 +1,29 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 
-import os.path
+from direct.showbase.ShowBase import ShowBase
+from panda3d.core import *
 
-import glfw
-from OpenGL.GL import *
-
-import callback
-import model
-import shader
+ASSET = "../assets/"
 
 
-def main():
-    os.chdir(os.path.join(
-        os.path.dirname(__file__),
-        '..',
-    ))
+class Laserwurfel(ShowBase):
+    def __init__(self):
+        ShowBase.__init__(self)
+        # self.render.set_antialias(p.AntialiasAttrib.M_auto)
+        self.disableMouse()
 
-    if not glfw.init():
-        return False
+        self.cube = self.loader.loadModel(ASSET + 'models/game_elements/cannon')
+        self.cube.set_name('Cannon')
+        self.cube.set_pos(0, 10, -2)
+        self.cube.set_hpr(-90, 0, 0)
+        self.cube.reparent_to(self.render)
 
-    # setup OpenGL to core 3.3
-    glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
-    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
-    glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-    glfw.window_hint(glfw.RESIZABLE, GL_FALSE)
+        ambient = DirectionalLight('sun')
+        ambient.set_color((1.0, 1.0, 1.0, 1.0))
+        self.ambient = self.render.attach_new_node(ambient)
+        self.ambient.set_hpr(0, -20, 0)
+        self.render.set_light(self.ambient)
 
-    glfw.set_error_callback(callback.error)
-
-    # create window
-    window = glfw.create_window(640, 480, "Laserwurfel", None, None)
-    if not window:
-        glfw.terminate()
-        return False
-    glfw.make_context_current(window)
-
-    glfw.set_key_callback(window, callback.key)
-    glfw.set_mouse_button_callback(window, callback.mousebutton)
-    glfw.set_cursor_pos_callback(window, callback.mouseposition)
-
-    glViewport(0, 0, 640, 480)
-
-    # create and load shaders
-    program = shader.program([
-        ('src/shaders/vertex.glsl', GL_VERTEX_SHADER),
-        ('src/shaders/fragment.glsl', GL_FRAGMENT_SHADER),
-    ])
-
-    # glfw.swap_interval(1)
-
-    cube = model.Asset('assets/models/game_elements/cube_01.obj')
-
-    # with cube as cube:
-    while not glfw.window_should_close(window):
-        glfw.poll_events()
-
-        glClearColor(0.0, 0.5, 1.0, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT)
-
-        glUseProgram(program)
-        # cube()
-
-        glfw.swap_buffers(window)
-    glfw.terminate()
-    return True
-
-
-if __name__ == "__main__":
-    main()
+        self.music = self.loader.loadSfx(ASSET + 'music/menu.ogg')
+        self.music.set_loop(True)
+        self.music.play()
