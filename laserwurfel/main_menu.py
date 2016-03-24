@@ -60,6 +60,7 @@ class Main(wx.Panel):
         button.SetPressedBottomColour(bg_color)
         button.SetPressedTopColour(bg_color)
 
+
 class Settings(wx.Panel):
 
     def __init__(self, parent):
@@ -163,16 +164,13 @@ class AudioSettings(wx.Panel):
         button.SetPressedTopColour(bg_color)
 
 
-# FIXME: Not scrollable because of reasons unknown to man
 class Keymapping(wx.ScrolledWindow):
     def __init__(self, parent):
         wx.ScrolledWindow.__init__(self, parent=parent, style=wx.VSCROLL)
-        # self.SetScrollbars(1, 1, 1, 1)
         self.SetScrollRate(100, 100)
 
         self.bg_color = (0, 0, 55)
         self.SetBackgroundColour(self.bg_color)
-
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         header = wx.StaticText(self, -1, 'Controls')
@@ -180,15 +178,31 @@ class Keymapping(wx.ScrolledWindow):
         self.Bind(wx.EVT_BUTTON, self.OnBack, btn_back)
         header_sz = wx.BoxSizer(wx.HORIZONTAL)
         header_sz.Add(header, 0, wx.ALL | wx.EXPAND, 10)
-        header_sz.AddSpacer(10)
-        header_sz.Add(btn_back, 0, wx.ALL | wx.EXPAND, 10)
+        header_sz.AddStretchSpacer(1)
+        header_sz.Add(btn_back, 0, wx.ALL, 10)
 
         font = wx.Font(30, wx.SWISS, wx.SLANT, wx.NORMAL)
         header.SetFont(font)
         header.SetForegroundColour('White')
         self.buttons = []
 
-        self.sizer.Add(header_sz, 1, wx.ALL | wx.EXPAND)
+        self.sizer.Add(header_sz, 1, wx.EXPAND)
+
+        text = wx.StaticText(
+            self,
+            label=("Hier kann die Tastenbelegung eingestellt werden. "
+                   "Erlaubt sind alle alphanumerischen Werte (A-Z, 1-9). \n"
+                   "Felder mit zwei Buttons können zwei verschiedene "
+                   "Zuweisungen haben, es handelt sich NICHT um eine \n"
+                   "Tastenkombination.")
+        )
+        text.SetForegroundColour('White')
+        self.sizer.Add(
+            text,
+            0,
+            wx.LEFT,
+            border=10
+        )
 
         buttons = [
             ["TOPLEFT", "Selects the top left node."],
@@ -219,6 +233,7 @@ class Keymapping(wx.ScrolledWindow):
         self.SetVirtualSize((size[0], vsize[1]))
 
     def OnBack(self, event):
+        self.ResetButtons()
         self.Hide()
         self.GetParent().settingsMenu.Show()
 
@@ -242,6 +257,8 @@ class Keymapping(wx.ScrolledWindow):
         hbox.Add(
             txt_desc,
             1,
+            wx.TOP,
+            border=20
         )
         self.sizer.Add(hbox, 1, wx.EXPAND | wx.ALL, 10)
 
@@ -268,6 +285,11 @@ class Keymapping(wx.ScrolledWindow):
                     button.SetBackgroundColour("white")
                     button.SetForegroundColour("black")
 
+    def ResetButtons(self):
+        print "yo"
+        for button in self.buttons:
+            button.GetParent().ResetButtons()
+
 
 class KeyButton(wx.Panel):
     def __init__(self, parent, function=None):
@@ -288,6 +310,7 @@ class KeyButton(wx.Panel):
         self.SetSizerAndFit(sizer)
 
     def OnPressed(self, event):
+        self.GetParent().ResetButtons()
         btn = event.GetEventObject()
         self.edit_key = btn.GetLabelText()
         btn.SetLabel("Press key...")
@@ -295,18 +318,17 @@ class KeyButton(wx.Panel):
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyPressed, btn)
 
     def OnKeyPressed(self, event):
-        if self.edit_btn is None:
-            return
 
-        if event.GetKeyCode() == wx.WXK_ESCAPE:
-            self.edit_btn.SetLabel(self.edit_key)
-            self.edit_btn = None
+        if self.edit_btn is None:
             return
 
         try:
             code = event.GetKeyCode()
-            char = str(chr(event.GetUniChar())).lower()
-            print code
+            char = str(unichr(event.GetUniChar())).lower()
+
+            if not char.isalnum():
+                self.ResetButtons()
+                return
 
             if code in [375, 331]:
                 key = "7"
@@ -339,7 +361,6 @@ class KeyButton(wx.Panel):
                 key = char
 
         except:
-            print "error"
             return
 
         self.edit_btn.SetLabel(key.upper())
@@ -362,6 +383,11 @@ class KeyButton(wx.Panel):
 
         for btn in self.GetButtons():
             self.keys.append(btn.GetLabelText().lower())
+
+    def ResetButtons(self):
+        if self.edit_btn:
+            self.edit_btn.SetLabel(self.edit_key)
+            self.edit_btn = None
 
 
 class Credits(wx.Panel):
