@@ -82,10 +82,19 @@ class MyApp(ShowBase):
             "rotcounterclock": self.OnRotCounterClock
         }
 
+        keys = []
+        duplicates = []
         items = config.parser.items("Controls")
         for item in items:
-            for button in item[1].split(","):
-                self.accept(button, actions[item[0]])
+            for key in item[1].split(","):
+                if key in keys:
+                    duplicates.append(key)
+                keys.append(key)
+
+        for item in items:
+            for key in item[1].split(","):
+                if key not in duplicates:
+                    self.accept(key, actions[item[0]])
 
         # Mouse
         self.accept("mouse1", self.OnLeftDown)

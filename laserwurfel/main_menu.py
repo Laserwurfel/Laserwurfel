@@ -191,10 +191,14 @@ class Keymapping(wx.ScrolledWindow):
         text = wx.StaticText(
             self,
             label=("Hier kann die Tastenbelegung eingestellt werden. "
-                   "Erlaubt sind alle alphanumerischen Werte (A-Z, 1-9). \n"
+                   "Erlaubt sind alle alphanumerischen Werte (A-Z, 1-9, "
+                   "keine Umlaute).\n"
                    "Felder mit zwei Buttons können zwei verschiedene "
                    "Zuweisungen haben, es handelt sich NICHT um eine \n"
-                   "Tastenkombination.")
+                   "Tastenkombination.\n"
+                   "Wenn eine Taste mehrmals zugewiesen ist, wird sie rot"
+                   "hinterlegt. BEIDE Aktionen sind im Spiel dann NICHT \n"
+                   "verfügbar, es müssen also alle Buttons weiß bleiben.")
         )
         text.SetForegroundColour('White')
         self.sizer.Add(
@@ -326,10 +330,6 @@ class KeyButton(wx.Panel):
             code = event.GetKeyCode()
             char = str(unichr(event.GetUniChar())).lower()
 
-            if not char.isalnum():
-                self.ResetButtons()
-                return
-
             if code in [375, 331]:
                 key = "7"
 
@@ -356,6 +356,10 @@ class KeyButton(wx.Panel):
 
             elif code in [382, 327]:
                 key = "3"
+
+            elif not char.isalnum():
+                self.ResetButtons()
+                return
 
             else:
                 key = char
