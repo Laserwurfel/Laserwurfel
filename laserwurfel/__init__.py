@@ -97,11 +97,15 @@ class Laserwurfel(ShowBase):
                 else:
                     self.move_camera_lerp.finish()
 
-            # perform movement on target
-            self.pivot_target.set_hpr(
-                self.pivot_target.get_hpr() +
-                movement() * 90
-            )
+            hpr = self.pivot_target.get_hpr()
+            if hpr[0] % 90 != 0 or hpr[1] % 90 != 0 or hpr[2] % 90 != 0:
+                # snap camera to nearest right angle
+                for i in range(3):
+                    hpr[i] = round(hpr[i] / 90.0) * 90
+                self.pivot_target.set_hpr(hpr)
+            else:
+                # perform movement on target
+                self.pivot_target.set_hpr(hpr + movement() * 90)
 
             # lerp camera to target
             self.move_camera_lerp = LerpHprInterval(
