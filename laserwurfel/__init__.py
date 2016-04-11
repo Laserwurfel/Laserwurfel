@@ -94,15 +94,10 @@ class Laserwurfel(ShowBase):
         for item in items:
             for key in item[1].split(","):
                 if key not in duplicates:
-                    if item[0].startswith("rot"):
-                        self.accept(
-                            key,
-                            self.move_camera(actions[item[0]])
-                        )
-                    else:
-                        self.accept(
-                            key, actions[item[0]]
-                        )
+                    self.accept(
+                        key,
+                        self.move_camera(actions[item[0]])
+                    )
 
     def move_camera(self, movement):
         def _move():
@@ -119,11 +114,15 @@ class Laserwurfel(ShowBase):
                 else:
                     self.move_camera_lerp.finish()
 
-            # perform movement on target
-            self.pivot_target.set_hpr(
-                self.pivot_target.get_hpr() +
-                movement() * 90
-            )
+            hpr = self.pivot_target.get_hpr()
+            if hpr[0] % 90 != 0 or hpr[1] % 90 != 0 or hpr[2] % 90 != 0:
+                # snap camera to nearest right angle
+                for i in range(3):
+                    hpr[i] = round(hpr[i] / 90.0) * 90
+                self.pivot_target.set_hpr(hpr)
+            else:
+                # perform movement on target
+                self.pivot_target.set_hpr(hpr + movement() * 90)
 
             # lerp camera to target
             self.move_camera_lerp = LerpHprInterval(
@@ -140,17 +139,17 @@ class Laserwurfel(ShowBase):
         r = self.pivot_target.get_r() % 360 / 90
         if p % 2 != 0:
             if r % 2 == 0:
-                return Vec3(-d, -d, 0)
+                return Vec3(d, (p - 2) * (1 - r), d * (p - 2))
             else:
-                return Vec3(2 * d, -d, 2 * d)  # FIXME?
+                return Vec3(0, d, 0)
         elif r == 0:
-            return Vec3((1 - p), 0, 0)
+            return Vec3(d * (1 - p), 0, 0)
         elif r == 1:
-            return Vec3(0, (p - 1), 0)
+            return Vec3(0, d, 0)
         elif r == 2:
-            return Vec3((p - 1), 0, 0)
+            return Vec3(d * (p - 1), 0, 0)
         elif r == 3:
-            return Vec3(0, (1 - p), 0)
+            return Vec3(0, d * (p - 1), 0)
 
     def get_pivot_p(self, d):
         p = self.pivot_target.get_p() % 360 / 90
@@ -159,14 +158,14 @@ class Laserwurfel(ShowBase):
             return Vec3(0, -d, 0)
         elif r == 1:
             if p % 2 == 0:
-                return Vec3(d, 0, 0)
+                return Vec3(d * (1 - p), 0, 0)
             else:
                 return Vec3(d, (p - 2), d)
         elif r == 2:
             return Vec3(0, d, 0)
         elif r == 3:
             if p % 2 == 0:
-                return Vec3(-d, 0, 0)
+                return Vec3(d * (p - 1), 0, 0)
             else:
                 return Vec3(-d, (p - 2), -d)
 
