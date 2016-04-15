@@ -134,14 +134,34 @@ class Laserwurfel(ShowBase):
 
         return _move
 
+    def move_camera_task(self, task):
+        if self.pivot.get_hpr() == self.pivot_target.get_hpr():
+            # normalize hpr
+            for node in [self.pivot_target, self.pivot]:
+                hpr = node.get_hpr()
+                for i in hpr:
+                    if i >= 360:
+                        i %= 360
+                node.set_hpr(hpr)
+
+            return task.done
+
+        diff = self.pivot_target.get_hpr() - self.pivot.get_hpr()
+        diff.normalize()
+        diff *= (1.0 - task.time)
+        self.pivot.set_hpr(self.pivot, diff)
+
+        return task.cont
+
     def get_pivot_h(self, d):
+        h = self.pivot_target.get_h() % 360 / 90
         p = self.pivot_target.get_p() % 360 / 90
         r = self.pivot_target.get_r() % 360 / 90
         if p % 2 != 0:
             if r % 2 == 0:
                 return Vec3(d, (p - 2) * (1 - r), d * (p - 2))
             else:
-                return Vec3(0, d, 0)
+                return Vec3(0, d * (2 - r), 0)
         elif r == 0:
             return Vec3(d * (1 - p), 0, 0)
         elif r == 1:
@@ -149,7 +169,10 @@ class Laserwurfel(ShowBase):
         elif r == 2:
             return Vec3(d * (p - 1), 0, 0)
         elif r == 3:
-            return Vec3(0, d * (p - 1), 0)
+            if h % 2 == 0:
+                return Vec3(0, d * (h - 1) * (p - 1), 0)
+            else:
+                return Vec3(0, d * (p - 1), 0)
 
     def get_pivot_p(self, d):
         p = self.pivot_target.get_p() % 360 / 90
