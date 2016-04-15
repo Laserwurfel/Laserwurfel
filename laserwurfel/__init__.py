@@ -333,18 +333,8 @@ class Laserwurfel(ShowBase):
     def ConnectNodes(self, node1, node2, connect=True):
         print("Connect", node1, node2, connect)
         if not connect:
-            node = node2
-            if node.get_next():
-                node.get_next().select(False)
-                if node.laser:
-                    node.laser[1].setColor(0, 0, 1)
-            while node.get_next():
-                node = node.get_next()
-                if node.laser:
-                    node.laser[1].setColor(0, 0, 1)
-                node.select(False)
-
             node2 = None
+
         if node2 and node2.get_prev():
             return False
 
@@ -412,7 +402,7 @@ class Node():
         return self.is_editable
 
     def connect_to(self, node):
-        self.next_node = node
+
         if node:
             node.prev_node = self
 
@@ -422,11 +412,43 @@ class Node():
             line.setThickness(1)
             line.moveTo(self.get_tip())
             line.drawTo(node.get_tip())
-            self.laser = [render.attachNewNode(line.create(False)), line]
-            print("Line:", line, line.getVertices())
+            self.laser = render.attachNewNode(line.create(False))
+
+            next_node = node
+
+            # Redraw Laser in red
+            while next_node.get_next() and next_node.laser:
+                next_node.laser.removeNode()
+
+                line = LineSegs("laser")
+                line.setColor(1, 0, 0)
+                line.setThickness(1)
+                line.moveTo(next_node.get_tip())
+                line.drawTo(next_node.get_next().get_tip())
+                next_node.laser = render.attachNewNode(line.create(False))
+
+                next_node = next_node.get_next()
 
         elif self.laser:
-            self.laser[0].removeNode()
+            self.laser.removeNode()
+            next_node = self.get_next()
+
+            # Redraw Laser in blue
+            while next_node.get_next() and next_node.laser:
+                next_node.laser.removeNode()
+
+                line = LineSegs("laser")
+                line.setColor(0, 0, 1)
+                line.setThickness(1)
+                line.moveTo(next_node.get_tip())
+                line.drawTo(next_node.get_next().get_tip())
+                next_node.laser = render.attachNewNode(line.create(False))
+
+                next_node = next_node.get_next()
+
+            self.next_node.prev_node = None
+
+        self.next_node = node
 
     def get_next(self):
         return self.next_node
