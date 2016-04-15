@@ -53,7 +53,7 @@ class Laserwurfel(ShowBase):
         self.pivot_target = self.render.attach_new_node("pivot-target")
         self.camera.reparent_to(self.pivot)
         self.camera.set_pos(0, -50, 0)
-        self.move_camera_lerp = None
+        self.pivot_start = None
 
         # Mouse
         self.accept("mouse1", self.OnLeftDown)
@@ -101,18 +101,8 @@ class Laserwurfel(ShowBase):
 
     def move_camera(self, movement):
         def _move():
-            # stop ongoing lerp
-            if self.move_camera_lerp:
-                if self.move_camera_lerp.is_finished():
-                    # normalize hpr
-                    for node in [self.pivot_target, self.pivot]:
-                        hpr = node.get_hpr()
-                        for i in hpr:
-                            if i >= 360:
-                                i %= 360
-                        node.set_hpr(hpr)
-                else:
-                    self.move_camera_lerp.finish()
+
+            self.taskMgr.remove("MoveCameraTask")
 
             hpr = self.pivot_target.get_hpr()
             if hpr[0] % 90 != 0 or hpr[1] % 90 != 0 or hpr[2] % 90 != 0:
@@ -123,6 +113,8 @@ class Laserwurfel(ShowBase):
             else:
                 # perform movement on target
                 self.pivot_target.set_hpr(hpr + movement() * 90)
+
+            self.taskMgr.add(self.move_camera_task, "MoveCameraTask")
 
             # lerp camera to target
             self.move_camera_lerp = LerpHprInterval(
