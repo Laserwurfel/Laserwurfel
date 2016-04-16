@@ -1,8 +1,10 @@
 from __future__ import unicode_literals, print_function
 
+import math
+
 from direct.showbase.ShowBase import ShowBase, DirectObject
 from direct.interval.IntervalGlobal import *
-from direct.interval.LerpInterval import LerpHprInterval
+from direct.interval.LerpInterval import LerpQuatInterval
 from direct.task import Task
 from panda3d.core import *
 from pandac.PandaModules import *
@@ -49,11 +51,11 @@ class Laserwurfel(ShowBase):
         self.music.set_loop(True)
         # self.music.play() TODO enable
 
-        self.pivot = self.render.attach_new_node("pivot")
-        self.pivot_target = self.render.attach_new_node("pivot-target")
-        self.camera.reparent_to(self.pivot)
+        self.camera_target = self.render.attach_new_node('camera-target')
+        self.camera_pivot = self.render.attach_new_node("camera-pivot")
+        self.camera.reparent_to(self.camera_pivot)
         self.camera.set_pos(0, -50, 0)
-        self.move_camera_lerp = None
+        self.camera_lerp = None
 
         # Mouse
         self.accept("mouse1", self.OnLeftDown)
@@ -101,94 +103,79 @@ class Laserwurfel(ShowBase):
 
     def move_camera(self, movement):
         def _move():
-            # stop ongoing lerp
-            if self.move_camera_lerp:
-                if self.move_camera_lerp.is_finished():
-                    # normalize hpr
-                    for node in [self.pivot_target, self.pivot]:
-                        hpr = node.get_hpr()
-                        for i in hpr:
-                            if i >= 360:
-                                i %= 360
-                        node.set_hpr(hpr)
-                else:
-                    self.move_camera_lerp.finish()
+            if self.camera_lerp:
+                self.camera_lerp.pause()
+            
+            # perform movement on target
+            self.camera_target.set_quat(
+                self.camera_target,
+                movement(),
+            )
 
-            hpr = self.pivot_target.get_hpr()
-            if hpr[0] % 90 != 0 or hpr[1] % 90 != 0 or hpr[2] % 90 != 0:
-                # snap camera to nearest right angle
-                for i in range(3):
-                    hpr[i] = round(hpr[i] / 90.0) * 90
-                self.pivot_target.set_hpr(hpr)
-            else:
-                # perform movement on target
-                self.pivot_target.set_hpr(hpr + movement() * 90)
+            # round to nearest right angle
+            self.camera_target.set_hpr(*[
+                round(axis / 90.0) * 90
+                for axis in self.camera_target.get_hpr()
+            ])
 
-            # lerp camera to target
-            self.move_camera_lerp = LerpHprInterval(
-                self.pivot,
-                1,
-                self.pivot_target.get_hpr(),
-                blendType="easeOut",
-            ).start()
+            # start lerping
+            self.camera_lerp = LerpQuatInterval(
+                self.camera_pivot,
+                1.0,
+                self.camera_target.get_quat(),
+                blendType='easeOut',
+            )
+            self.camera_lerp.start()
 
         return _move
 
-    def get_pivot_h(self, d):
-        p = self.pivot_target.get_p() % 360 / 90
-        r = self.pivot_target.get_r() % 360 / 90
-        if p % 2 != 0:
-            if r % 2 == 0:
-                return Vec3(d, (p - 2) * (1 - r), d * (p - 2))
-            else:
-                return Vec3(0, d, 0)
-        elif r == 0:
-            return Vec3(d * (1 - p), 0, 0)
-        elif r == 1:
-            return Vec3(0, d, 0)
-        elif r == 2:
-            return Vec3(d * (p - 1), 0, 0)
-        elif r == 3:
-            return Vec3(0, d * (p - 1), 0)
-
-    def get_pivot_p(self, d):
-        p = self.pivot_target.get_p() % 360 / 90
-        r = self.pivot_target.get_r() % 360 / 90
-        if r == 0:
-            return Vec3(0, -d, 0)
-        elif r == 1:
-            if p % 2 == 0:
-                return Vec3(d * (1 - p), 0, 0)
-            else:
-                return Vec3(d, (p - 2), d)
-        elif r == 2:
-            return Vec3(0, d, 0)
-        elif r == 3:
-            if p % 2 == 0:
-                return Vec3(d * (p - 1), 0, 0)
-            else:
-                return Vec3(-d, (p - 2), -d)
-
-    def get_pivot_r(self, d):
-        return Vec3(0, 0, d)
-
     def OnRotLeft(self):
-        return self.get_pivot_h(-1)
+        return Quat(
+            +math.sqrt(0.5),
+            +0,
+            +0,
+            -math.sqrt(0.5),
+        )
 
     def OnRotRight(self):
-        return self.get_pivot_h(1)
+        return Quat(
+            +math.sqrt(0.5),
+            +0,
+            +0,
+            +math.sqrt(0.5),
+        )
 
     def OnRotUp(self):
-        return self.get_pivot_p(1)
+        return Quat(
+            +math.sqrt(0.5),
+            -math.sqrt(0.5),
+            +0,
+            +0,
+        )
 
     def OnRotDown(self):
-        return self.get_pivot_p(-1)
+        return Quat(
+            +math.sqrt(0.5),
+            +math.sqrt(0.5),
+            +0,
+            +0,
+        )
 
     def OnRotClock(self):
-        return self.get_pivot_r(1)
+        return Quat(
+            +math.sqrt(0.5),
+            +0,
+            +math.sqrt(0.5),
+            +0,
+        )
 
     def OnRotCounterClock(self):
-        return self.get_pivot_r(-1)
+        return Quat(
+            +math.sqrt(0.5),
+            +0,
+            -math.sqrt(0.5),
+            +0,
+        )
 
     def OnTopLeft(self):
         pass
@@ -229,34 +216,24 @@ class Laserwurfel(ShowBase):
     def OnMouseMotion(self, x, y):
         if self.last_click is None:
             self.last_click = Vec2(x, y)
-        else:
-            here = Vec2(x, y)
-            diff = here - self.last_click
-            self.last_click = here
+            return
 
-            if diff.x > 0:
-                dh = 1
-            elif diff.x < 0:
-                dh = -1
-            else:
-                dh = 0
+        here = Vec2(x, y)
+        diff = self.last_click - here
+        diff *= 50
+        self.last_click = here
 
-            if diff.y > 0:
-                dp = 1
-            elif diff.y < 0:
-                dp = -1
-            else:
-                dp = 0
+        rotation = Quat()
+        rotation.set_hpr(
+            Vec3(diff.x, -diff.y, 0),
+            CS_default,
+        )
 
-            self.pivot_target.set_hpr(
-                self.pivot_target.get_hpr() +
-                Vec3(
-                    -diff.x,
-                    diff.y,
-                    0,
-                ) * 50
-            )
-            self.pivot.set_hpr(self.pivot_target.get_hpr())
+        self.camera_target.set_quat(
+            self.camera_target,
+            rotation,
+        )
+        self.camera_pivot.set_quat(self.camera_target.get_quat())
 
     def SetInitialNode(self, node):
         self.initial_node = node
@@ -475,6 +452,7 @@ class Picker(DirectObject.DirectObject):
         self.picker.addCollider(self.pickerNP, self.queue)
         self.picked_obj = None
         self.accept('mouse1', self.OnClickedLeft)
+        self.accept('mouse1-up', self.OnReleasedLeft)
         self.accept('mouse3', self.OnClickedRight)
 
     # Sets the pickable tag on objects
@@ -504,7 +482,14 @@ class Picker(DirectObject.DirectObject):
         return self.picked_obj
 
     def OnClickedLeft(self):
-        self.getObjectHit(base.mouseWatcherNode.getMouse())
+        mouse = base.mouseWatcherNode.getMouse()
+        self.last_click = (mouse.getX(), mouse.getY())
+
+    def OnReleasedLeft(self):
+        mouse = base.mouseWatcherNode.getMouse()
+        if self.last_click != (mouse.getX(), mouse.getY()):
+            return
+        self.getObjectHit(mouse)
         if self.picked_obj:
             self.cube.OnNodeSelected(self.picked_obj)
 
