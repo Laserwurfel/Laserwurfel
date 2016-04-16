@@ -67,7 +67,7 @@ class Laserwurfel(ShowBase):
 
         self.SetKeybindings()
         # TODO: Do not hard code level number
-        self.LoadLevel(1)
+        self.LoadLevel(5)
 
     def SetKeybindings(self):
 
@@ -249,11 +249,28 @@ class Laserwurfel(ShowBase):
             node = node.get_next()
         return node
 
+    def UpdateCurrentNode(self):
+        for x in self.nodes:
+            for y in x:
+                for z in y:
+                    for w in z:
+                        for node in w:
+                            if node:
+                                node.set_current(current=False)
+
+        node = self.initial_node
+        while node and node.get_next():
+            node.set_current(current=False)
+            print("NODE", node)
+            node = node.get_next()
+        if not node.is_destination:
+            node.set_current()
+
     def OnNodeSelected(self, obj, select=True):
 
         pos = []
         for v in obj.getName().split("|")[1].split(","):
-            pos.append(int(v)+1)
+            pos.append(int(v) + 1)
         node = self.nodes[pos[0]][0][pos[1]][0][pos[2]]
         current_node = self.GetCurrentNode()
 
@@ -305,6 +322,8 @@ class Laserwurfel(ShowBase):
         if node.get_next():
             print("Next:", node.get_next().get_position())
         print("Selected:", node.is_selected())
+
+        self.UpdateCurrentNode()
 
     def ConnectNodes(self, node1, node2, connect=True):
         print("Connect", node1, node2, connect)
@@ -396,16 +415,17 @@ class Laserwurfel(ShowBase):
         }
 
     def LoadLevel(self, number):
-        level_path = path.join(LEVELS, "level"+str(number), "full")
+        level_path = path.join(LEVELS, "level" + str(number), "full")
         self.level.parse(level_path)
 
         # Structure
         for line in self.level.structure:
-            # print(line[0].__name__)
+            print(line[0].__name__)
             if line[0].__name__ == "path":
                 initial_node = self.GetNode(line[1])
                 initial_node.select(True)
                 initial_node.is_editable = False
+                initial_node.set_current()
                 self.initial_node = initial_node
 
                 end_node = self.GetNode(line[2])
@@ -413,7 +433,9 @@ class Laserwurfel(ShowBase):
                 end_node.is_destination = True
                 self.end_node = end_node
 
-            elif line[0].__name__ == "deactivate":
+            elif (line[0].__name__ == "deactivate" and
+                  type(line[1][0]) is not str):
+
                 node = self.GetNode(line[1])
                 node.model.removeNode()
 
@@ -421,9 +443,27 @@ class Laserwurfel(ShowBase):
                 node1 = self.GetNode(line[1])
                 node2 = self.GetNode(line[2])
                 grid = Grid(node1, node2, self)
+                switches = []
+                for i in range(len(line)):
+                    if i <= 2 or i % 2 != 1:
+                        continue
 
+                    j = i + 1
+                    switch = Switch(
+                        self.GetNode(line[i]), self.GetNode(line[i+1]), self)
+                    switches.append(switch)
+
+                grid.switches.append(switches)
                 node1.grids.append(grid)
                 node2.grids.append(grid)
+
+            elif line[0].__name__ == "teleporter":
+                node1 = self.GetNode(line[1])
+                node2 = self.GetNode(line[2])
+                node1.setup_model('game_elements/teleporter')
+                node2.setup_model('game_elements/teleporter')
+                node1.teleport_to = node2
+                node2.teleport_to = node1
 
         # Decorations
         i = 1
@@ -438,6 +478,11 @@ class Laserwurfel(ShowBase):
 
         sides = ["front", "left", "back", "right", "top", "bottom"]
         for side in sides:
+
+            animal = "dog"
+            if flip():
+                animal = "rabbit"
+
             for line in self.level.detail[side]:
                 for element in line:
                     model_name = None
@@ -451,9 +496,6 @@ class Laserwurfel(ShowBase):
                     elif element == "##":
                         model_name = "wheat"
                     elif element == "%%":
-                        animal = "dog"
-                        if flip():
-                            animal = "rabbit"
                         model_name = animal + "_" + version
                     elif element == "[]":
                         model_name = "house_" + version
@@ -461,7 +503,8 @@ class Laserwurfel(ShowBase):
                         model = self.loader.loadModel(
                             ASSET + "models/decorations/" + model_name)
 
-                        d = random.randint(1, 4)
+                        # TODO: Random orientation
+                        d = 0
 
                         if side == "front":
                             model.set_hpr(d, 90, 0)
@@ -500,7 +543,7 @@ class Laserwurfel(ShowBase):
         # self.music.play()
 
     def GetNode(self, pos):
-        node = self.nodes[pos[0]+1][0][pos[1]+1][0][pos[2]+1]
+        node = self.nodes[pos[0] + 1][0][pos[1] + 1][0][pos[2] + 1]
         return node
 
     def GetPositionBetweenNodes(self, node1, node2):
@@ -512,8 +555,10 @@ class Laserwurfel(ShowBase):
 
 class Grid():
     def __init__(self, node1, node2, cube):
-        self.model = cube.loader.loadModel(ASSET + 'models/game_elements/grid')
+        self.model = cube.loader.loadModel(
+            ASSET + 'models/game_elements/grid')
         self.nodes = (node1, node2)
+        self.switches = []
 
         pos = cube.GetPositionBetweenNodes(node1, node2)
         vecC = pos[0]
@@ -522,6 +567,25 @@ class Grid():
         # TODO: Find correct position for grid
         self.model.set_pos(vecC[0], vecC[1], vecC[2])
         self.model.look_at(vecA[0], vecA[1], vecA[2])
+        self.model.reparent_to(cube.cube)
+
+
+class Switch():
+    def __init__(self, node1, node2, cube):
+        self.model = cube.loader.loadModel(
+            ASSET + 'models/game_elements/switch')
+        self.nodes = (node1, node2)
+
+        pos = cube.GetPositionBetweenNodes(node1, node2)
+        vecC = pos[0]
+        # TODO: Rotate switches
+        # TODO: Find correct position for switch
+        self.model.set_pos(vecC[0], vecC[1], vecC[2])
+        self.model.look_at(0, 0, 0)
+        self.model.set_hpr(
+            self.model,
+            (0, 90, 0),
+        )
         self.model.reparent_to(cube.cube)
 
 
@@ -537,6 +601,8 @@ class Node():
         self.laser = None
         self.grids = []
         self.cube = cube
+        self.indicator = None
+        self.teleport_to = None
 
         self.setup_model("game_elements/node")
 
@@ -563,6 +629,24 @@ class Node():
             (0, 90, 0),
         )
         self.cube.mouse_picker.makePickable(self.model)
+
+    def set_current(self, current=True):
+        if current:
+            self.indicator = self.cube.loader.loadModel(
+                ASSET + "models/game_elements/indicator")
+            self.indicator.reparent_to(self.cube.cube)
+            self.indicator.set_pos(
+                4 * self.position[0],
+                4 * self.position[1],
+                4 * self.position[2])
+            self.indicator.look_at(0, 0, 0)
+            self.indicator.set_hpr(
+                self.indicator,
+                (0, 90, 0),
+            )
+        elif self.indicator:
+            self.indicator.removeNode()
+            self.indicator = None
 
     def get_tip(self):
         d = 5.2
@@ -592,6 +676,9 @@ class Node():
 
         if node:
             node.prev_node = self
+
+            # if node.teleport_to:
+            #    node.connect_to(node.teleport_to)
 
             # Draw the line
             line = LineSegs("laser")

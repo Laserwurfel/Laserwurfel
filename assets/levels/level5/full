@@ -38,7 +38,6 @@ O--------()--------O--------()--------O--------()--------O--------()--------O
 % back_bottom front_left_top
 
 ! front_left_bottom
-! front_left_top
 ! front_left
 ! back_left_bottom
 ! back_left
@@ -50,7 +49,6 @@ O--------()--------O--------()--------O--------()--------O--------()--------O
 ! back_right
 ! front_bottom
 ! front_top
-! back_bottom
 ! back_top
 
 [] right_top right_bottom front_left left_top
