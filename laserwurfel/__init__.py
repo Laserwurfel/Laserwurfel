@@ -320,7 +320,7 @@ class Laserwurfel(ShowBase):
         if not connect:
             node2 = None
 
-        if node2 and node2.get_prev():
+        if not self.NodeIsLooseString(node2) and node2.get_prev():
             return False
 
         node1.connect_to(node2)
@@ -328,6 +328,22 @@ class Laserwurfel(ShowBase):
         # TODO: Prevent illegal connections
         # TODO: Updated lasers lines (also dotted)
         return True
+
+    def NodeIsLooseString(self, node):
+        goes_to_end = False
+        goes_to_start = False
+        next_node = node.get_next()
+        while next_node:
+            if next_node is self.end_node:
+                goes_to_end = True
+            next_node = next_node.get_next()
+
+        while prev_node:
+            if prev_node is self.initial_node:
+                goes_to_start = True
+            next_node = next_node.get_next()
+
+        return not (goes_to_start or goes_to_end)
 
 
 class Node():
