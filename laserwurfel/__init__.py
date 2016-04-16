@@ -104,20 +104,19 @@ class Laserwurfel(ShowBase):
     def move_camera(self, movement):
         def _move():
             if self.camera_lerp:
-                if self.camera_lerp.is_stopped():
-                    # round to nearest right angle
-                    self.camera_target.set_hpr(*[
-                        round(axis / 90.0) * 90
-                        for axis in self.camera_target.get_hpr()
-                    ])
-                else:
-                    self.camera_lerp.pause()
+                self.camera_lerp.pause()
             
             # perform movement on target
             self.camera_target.set_quat(
                 self.camera_target,
                 movement(),
             )
+
+            # round to nearest right angle
+            self.camera_target.set_hpr(*[
+                round(axis / 90.0) * 90
+                for axis in self.camera_target.get_hpr()
+            ])
 
             # start lerping
             self.camera_lerp = LerpQuatInterval(
