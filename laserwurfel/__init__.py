@@ -10,8 +10,10 @@ from panda3d.core import *
 from pandac.PandaModules import *
 
 import config
+from os import path
 
 ASSET = "../assets/"
+LEVELS = path.join(ASSET, "levels")
 
 
 class Laserwurfel(ShowBase):
@@ -21,6 +23,7 @@ class Laserwurfel(ShowBase):
         self.disableMouse()
         self.mouse_picker = Picker(self)
         self.initial_node = None
+        self.end_node = None
 
         self.cube = self.loader.loadModel(ASSET + 'models/game_elements/cube')
         self.cube.set_name('Planet')
@@ -63,6 +66,8 @@ class Laserwurfel(ShowBase):
         self.taskMgr.add(self.mouse_drag_task, "MouseDragTask")
 
         self.SetKeybindings()
+        # TODO: Do not hard code level number
+        self.LoadLevel(1)
 
     def SetKeybindings(self):
 
@@ -105,7 +110,7 @@ class Laserwurfel(ShowBase):
         def _move():
             if self.camera_lerp:
                 self.camera_lerp.pause()
-            
+
             # perform movement on target
             self.camera_target.set_quat(
                 self.camera_target,
@@ -264,22 +269,27 @@ class Laserwurfel(ShowBase):
             print("Next:", node.get_next().get_position())
         print("Selected:", node.is_selected())
 
+        # Actual algorithm
         if node.is_selected() == select:
             return
 
-        if current_node:
-            if node is current_node and node.get_is_editable():
-                if node.get_prev():
-                    self.ConnectNodes(node.get_prev(), node, connect=False)
-            else:
-                print("Cliked", node.is_selected(), node.get_is_editable())
-                if node.is_selected():
-                    if node.get_is_editable():
-                        self.ConnectNodes(node.get_prev(), node, connect=False)
-                else:
-                    self.ConnectNodes(current_node, node)
+        if not current_node:
+            print("ERROR: No current node!")
+            return
 
-        node.select(select)
+        if node is current_node and node.get_is_editable():
+            if node.get_prev():
+                self.ConnectNodes(node.get_prev(), node, connect=False)
+                node.select(select)
+        else:
+            print("Cliked", node.is_selected(), node.get_is_editable())
+            if node.is_selected():
+                if node.get_is_editable():
+                    self.ConnectNodes(node.get_prev(), node, connect=False)
+                    node.select(select)
+            else:
+                if self.ConnectNodes(current_node, node):
+                    node.select(select)
 
         # Debug information
         print("~~ NEW ~~")
@@ -297,8 +307,14 @@ class Laserwurfel(ShowBase):
         if not connect:
             node2 = None
 
-        if not self.NodeIsLooseString(node2) and node2.get_prev():
-            return False
+        else:
+            string_info = self.NodeInLooseString(node2)
+            print(string_info)
+            if string_info["between"]:
+                return False
+
+            if string_info["last"]:
+                self.ReverseString(node2)
 
         node1.connect_to(node2)
 
@@ -306,10 +322,40 @@ class Laserwurfel(ShowBase):
         # TODO: Updated lasers lines (also dotted)
         return True
 
-    def NodeIsLooseString(self, node):
+    def ReverseString(self, node):
+        while node:
+            prev_node = node.get_prev()
+
+            if node.laser:
+                node.laser.removeNode()
+
+            node.prev_node = node.next_node
+            node.next_node = prev_node
+
+            node = prev_node
+
+    def NodeInLooseString(self, node):
+
+        if not node:
+            return False
+
         goes_to_end = False
         goes_to_start = False
+        is_first = False
+        is_last = False
+        is_between = False
         next_node = node.get_next()
+        prev_node = node.get_prev()
+
+        if not next_node:
+            is_last = True
+
+        if not prev_node:
+            is_first = True
+
+        if not (is_first or is_last):
+            is_between = True
+
         while next_node:
             if next_node is self.end_node:
                 goes_to_end = True
@@ -318,9 +364,17 @@ class Laserwurfel(ShowBase):
         while prev_node:
             if prev_node is self.initial_node:
                 goes_to_start = True
-            next_node = next_node.get_next()
+            prev_node = prev_node.get_prev()
 
-        return not (goes_to_start or goes_to_end)
+        return {
+            "loose": not (goes_to_start or goes_to_end),
+            "first": is_first,
+            "last": is_last,
+            "between": is_between
+        }
+
+    def LoadLevel(self, number):
+        print(number)
 
 
 class Node():
@@ -395,8 +449,9 @@ class Node():
             next_node = node
 
             # Redraw Laser in red
-            while next_node.get_next() and next_node.laser:
-                next_node.laser.removeNode()
+            while next_node.get_next():
+                if next_node.laser:
+                    next_node.laser.removeNode()
 
                 line = LineSegs("laser")
                 line.setColor(1, 0, 0)
@@ -405,15 +460,18 @@ class Node():
                 line.drawTo(next_node.get_next().get_tip())
                 next_node.laser = render.attachNewNode(line.create(False))
 
+                next_node.select(True)
                 next_node = next_node.get_next()
 
         elif self.laser:
             self.laser.removeNode()
             next_node = self.get_next()
+            next_node.select(False)
 
             # Redraw Laser in blue
-            while next_node.get_next() and next_node.laser:
-                next_node.laser.removeNode()
+            while next_node.get_next():
+                if next_node.laser:
+                    next_node.laser.removeNode()
 
                 line = LineSegs("laser")
                 line.setColor(0, 0, 1)
@@ -423,6 +481,8 @@ class Node():
                 next_node.laser = render.attachNewNode(line.create(False))
 
                 next_node = next_node.get_next()
+                if next_node:
+                    next_node.select(False)
 
             self.next_node.prev_node = None
 
