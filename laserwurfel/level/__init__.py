@@ -424,9 +424,10 @@ def parse_structure(lines):
 
         # check argument count
         # both length are 1 above the actual count
-        expected = len(inspect.getargspec(structure_entry[0])[0])
+        spec = inspect.getargspec(structure_entry[0])
+        expected = len(spec.args)
         actual = len(structure_entry)
-        if expected != actual:
+        if actual < expected or (spec.varargs is None and actual > expected):
             raise ValueError(
                 "Expected {} arguments for structure entry, got {}"
                 .format(expected, actual),
