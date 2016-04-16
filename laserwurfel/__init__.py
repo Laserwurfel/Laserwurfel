@@ -217,34 +217,24 @@ class Laserwurfel(ShowBase):
     def OnMouseMotion(self, x, y):
         if self.last_click is None:
             self.last_click = Vec2(x, y)
-        else:
-            here = Vec2(x, y)
-            diff = here - self.last_click
-            self.last_click = here
+            return
 
-            if diff.x > 0:
-                dh = 1
-            elif diff.x < 0:
-                dh = -1
-            else:
-                dh = 0
+        here = Vec2(x, y)
+        diff = self.last_click - here
+        diff *= 50
+        self.last_click = here
 
-            if diff.y > 0:
-                dp = 1
-            elif diff.y < 0:
-                dp = -1
-            else:
-                dp = 0
+        rotation = Quat()
+        rotation.set_hpr(
+            Vec3(diff.x, -diff.y, 0),
+            CS_default,
+        )
 
-            self.camera_target.set_hpr(
-                self.camera_target.get_hpr() +
-                Vec3(
-                    -diff.x,
-                    diff.y,
-                    0,
-                ) * 50
-            )
-            self.camera_pivot.set_hpr(self.camera_target.get_hpr())
+        self.camera_target.set_quat(
+            self.camera_target,
+            rotation,
+        )
+        self.camera_pivot.set_quat(self.camera_target.get_quat())
 
     def SetInitialNode(self, node):
         self.initial_node = node
