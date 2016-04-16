@@ -436,6 +436,7 @@ class Picker(DirectObject.DirectObject):
         self.picker.addCollider(self.pickerNP, self.queue)
         self.picked_obj = None
         self.accept('mouse1', self.OnClickedLeft)
+        self.accept('mouse1-up', self.OnReleasedLeft)
         self.accept('mouse3', self.OnClickedRight)
 
     # Sets the pickable tag on objects
@@ -465,7 +466,14 @@ class Picker(DirectObject.DirectObject):
         return self.picked_obj
 
     def OnClickedLeft(self):
-        self.getObjectHit(base.mouseWatcherNode.getMouse())
+        mouse = base.mouseWatcherNode.getMouse()
+        self.last_click = (mouse.getX(), mouse.getY())
+
+    def OnReleasedLeft(self):
+        mouse = base.mouseWatcherNode.getMouse()
+        if self.last_click != (mouse.getX(), mouse.getY()):
+            return
+        self.getObjectHit(mouse)
         if self.picked_obj:
             self.cube.OnNodeSelected(self.picked_obj)
 
