@@ -1,6 +1,10 @@
 from __future__ import unicode_literals, print_function
 
 import math
+import operator
+import random
+import config
+from os import path
 
 from direct.showbase.ShowBase import ShowBase, DirectObject
 from direct.interval.IntervalGlobal import *
@@ -9,11 +13,10 @@ from direct.task import Task
 from panda3d.core import *
 from pandac.PandaModules import *
 
-import config
-from os import path
+import level
 
 ASSET = "../assets/"
-LEVELS = path.join(ASSET, "levels")
+LEVELS = path.join("assets", "levels")
 
 
 class Laserwurfel(ShowBase):
@@ -24,6 +27,7 @@ class Laserwurfel(ShowBase):
         self.mouse_picker = Picker(self)
         self.initial_node = None
         self.end_node = None
+        self.level = level.Level()
 
         self.cube = self.loader.loadModel(ASSET + 'models/game_elements/cube')
         self.cube.set_name('Planet')
@@ -49,10 +53,6 @@ class Laserwurfel(ShowBase):
         ambient.set_color((0.4, 0.4, 0.4, 1.0))
         self.ambient = self.render.attach_new_node(ambient)
         self.render.set_light(self.ambient)
-
-        self.music = self.loader.loadSfx(ASSET + 'music/menu.ogg')
-        self.music.set_loop(True)
-        # self.music.play() TODO enable
 
         self.camera_target = self.render.attach_new_node('camera-target')
         self.camera_pivot = self.render.attach_new_node("camera-pivot")
@@ -271,7 +271,11 @@ class Laserwurfel(ShowBase):
 
         # Actual algorithm
         if node.is_selected() == select:
-            return
+            if not select and node.get_prev():
+                self.ConnectNodes(node.get_prev(), node, connect=False)
+                node.select(False)
+            else:
+                return
 
         if not current_node:
             print("ERROR: No current node!")
@@ -287,7 +291,7 @@ class Laserwurfel(ShowBase):
                 if node.get_is_editable():
                     self.ConnectNodes(node.get_prev(), node, connect=False)
                     node.select(select)
-            else:
+            elif select:
                 if self.ConnectNodes(current_node, node):
                     node.select(select)
 
@@ -308,8 +312,20 @@ class Laserwurfel(ShowBase):
             node2 = None
 
         else:
+            for grid in node1.grids:
+                if node2 in grid.nodes:
+                    return False
+
+            if node1.is_destination:
+                return False
+
             string_info = self.NodeInLooseString(node2)
             print(string_info)
+
+            if node2.is_destination:
+                if node2.get_prev():
+                    return False
+
             if string_info["between"]:
                 return False
 
@@ -366,54 +382,193 @@ class Laserwurfel(ShowBase):
                 goes_to_start = True
             prev_node = prev_node.get_prev()
 
+        if (next_node or prev_node):
+            string = True
+        else:
+            string = False
+
         return {
             "loose": not (goes_to_start or goes_to_end),
             "first": is_first,
             "last": is_last,
-            "between": is_between
+            "between": is_between,
+            "string": string
         }
 
     def LoadLevel(self, number):
-        print(number)
+        level_path = path.join(LEVELS, "level"+str(number), "full")
+        self.level.parse(level_path)
+
+        # Structure
+        for line in self.level.structure:
+            # print(line[0].__name__)
+            if line[0].__name__ == "path":
+                initial_node = self.GetNode(line[1])
+                initial_node.select(True)
+                initial_node.is_editable = False
+                self.initial_node = initial_node
+
+                end_node = self.GetNode(line[2])
+                end_node.setup_model('game_elements/cannon')
+                end_node.is_destination = True
+                self.end_node = end_node
+
+            elif line[0].__name__ == "deactivate":
+                node = self.GetNode(line[1])
+                node.model.removeNode()
+
+            elif line[0].__name__ == "wall":
+                node1 = self.GetNode(line[1])
+                node2 = self.GetNode(line[2])
+                grid = Grid(node1, node2, self)
+
+                node1.grids.append(grid)
+                node2.grids.append(grid)
+
+        # Decorations
+        i = 1
+        j = 1
+
+        def flip():
+            flip = random.randint(0, 1)
+            if flip == 1:
+                return True
+            else:
+                return False
+
+        sides = ["front", "left", "back", "right", "top", "bottom"]
+        for side in sides:
+            for line in self.level.detail[side]:
+                for element in line:
+                    model_name = None
+
+                    version = "a"
+                    if flip():
+                        version = "b"
+
+                    if element == "@@":
+                        model_name = "tree_" + version
+                    elif element == "##":
+                        model_name = "wheat"
+                    elif element == "%%":
+                        animal = "dog"
+                        if flip():
+                            animal = "rabbit"
+                        model_name = animal + "_" + version
+                    elif element == "[]":
+                        model_name = "house_" + version
+                    if model_name:
+                        model = self.loader.loadModel(
+                            ASSET + "models/decorations/" + model_name)
+
+                        d = random.randint(1, 4)
+
+                        if side == "front":
+                            model.set_hpr(d, 90, 0)
+                            model.set_pos(j - 5, -4.5, i - 5)
+                        elif side == "left":
+                            model.set_hpr(d, -90, -90)
+                            model.set_pos(-4.5, j - 5, i - 5)
+                        elif side == "back":
+                            model.set_hpr(d, -90, 0)
+                            model.set_pos(i - 5, 4.5, j - 5)
+                        elif side == "right":
+                            model.set_hpr(d, -90, 90)
+                            model.set_pos(4.5, j - 5, i - 5)
+                        elif side == "top":
+                            model.set_pos(j - 5, i - 5, 4.5)
+                        elif side == "bottom":
+                            model.set_hpr(d, -180, 0)
+                            model.set_pos(j - 5, i - 5, -4.5)
+
+                        model.reparent_to(self.cube)
+
+                    if j < 9:
+                        j += 1
+                    else:
+                        j = 1
+                if i < 9:
+                    i += 1
+                else:
+                    i = 1
+
+        # Meta
+        self.music = self.loader.loadSfx(
+            ASSET + 'music/' + self.level.meta["track"][1])
+        self.music.set_loop(True)
+        # TODO: Enable music
+        # self.music.play()
+
+    def GetNode(self, pos):
+        node = self.nodes[pos[0]+1][0][pos[1]+1][0][pos[2]+1]
+        return node
+
+    def GetPositionBetweenNodes(self, node1, node2):
+        vecA = [n * 4.5 for n in node1.position]
+        vecB = [n * 4.5 for n in node2.position]
+        vecAB = [n / 2 for n in map(operator.sub, vecB, vecA)]
+        return [map(operator.add, vecA, vecAB), vecA]
+
+
+class Grid():
+    def __init__(self, node1, node2, cube):
+        self.model = cube.loader.loadModel(ASSET + 'models/game_elements/grid')
+        self.nodes = (node1, node2)
+
+        pos = cube.GetPositionBetweenNodes(node1, node2)
+        vecC = pos[0]
+        vecA = pos[1]
+        # TODO: Rotate grids
+        # TODO: Find correct position for grid
+        self.model.set_pos(vecC[0], vecC[1], vecC[2])
+        self.model.look_at(vecA[0], vecA[1], vecA[2])
+        self.model.reparent_to(cube.cube)
 
 
 class Node():
     def __init__(self, x, y, z, cube):
-        self.model = cube.loader.loadModel(ASSET + 'models/game_elements/node')
-        self.model.setName("Node|"+str(x)+","+str(y)+","+str(z))
-        self.position = (x, y, z)
+
+        self.position = (y, x, z)
         self.selected = False
         self.is_destination = False
         self.is_editable = True
         self.next_node = None
         self.prev_node = None
         self.laser = None
+        self.grids = []
+        self.cube = cube
 
-        self.model.reparent_to(cube.cube)
-        self.model.set_pos(4 * x, 4 * y, 4 * z)
-        self.model.look_at(0, 0, 0)
-        self.model.set_hpr(
-            self.model,
-            (0, 90, 0),
-        )
-        cube.mouse_picker.makePickable(self.model)
+        self.setup_model("game_elements/node")
 
         light = PointLight('node_light')
         light.setColor(VBase4(1, 0, 0, 0.5))
         self.lnp = render.attachNewNode(light)
         self.lnp.set_pos(5 * y, 5 * x, 5 * z)
 
-        # Only for testing:
-        if self.position == (-1, -1, 1):
-            self.select(True)
-            self.is_editable = False
-            cube.SetInitialNode(self)
+    def setup_model(self, element):
+        self.model = self.cube.loader.loadModel(ASSET + "models/" + element)
+        self.model.setName(
+            "Node|" +
+            str(self.position[0]) + "," +
+            str(self.position[1]) + "," +
+            str(self.position[2]))
+        self.model.reparent_to(self.cube.cube)
+        self.model.set_pos(
+            4 * self.position[0],
+            4 * self.position[1],
+            4 * self.position[2])
+        self.model.look_at(0, 0, 0)
+        self.model.set_hpr(
+            self.model,
+            (0, 90, 0),
+        )
+        self.cube.mouse_picker.makePickable(self.model)
 
     def get_tip(self):
         d = 5.2
         return (
-            self.position[1] * d,
             self.position[0] * d,
+            self.position[1] * d,
             self.position[2] * d,
         )
 
@@ -546,12 +701,15 @@ class Picker(DirectObject.DirectObject):
         self.last_click = (mouse.getX(), mouse.getY())
 
     def OnReleasedLeft(self):
-        mouse = base.mouseWatcherNode.getMouse()
-        if self.last_click != (mouse.getX(), mouse.getY()):
-            return
-        self.getObjectHit(mouse)
-        if self.picked_obj:
-            self.cube.OnNodeSelected(self.picked_obj)
+        try:
+            mouse = base.mouseWatcherNode.getMouse()
+            if self.last_click != (mouse.getX(), mouse.getY()):
+                return
+            self.getObjectHit(mouse)
+            if self.picked_obj:
+                self.cube.OnNodeSelected(self.picked_obj)
+        except:
+            pass
 
     def OnClickedRight(self):
         self.getObjectHit(base.mouseWatcherNode.getMouse())
