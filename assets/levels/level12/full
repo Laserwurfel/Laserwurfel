@@ -33,3 +33,11 @@ O--------()--------O--------()--------O--------()--------O--------()--------O
                    |##################|
                    O--------()--------O
 
+* back_left_top front_right_bottom
+
+! front_left
+! front_top
+
+% front_top front_left bottom
+
+% front_left_top back_right_bottom
