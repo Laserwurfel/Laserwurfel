@@ -351,7 +351,15 @@ class Laserwurfel(ShowBase):
             if string_info["last"]:
                 self.ReverseString(node2)
 
+            if node2.teleport_to:
+                node1.connect_to(node2)
+                node2.connect_to(node2.teleport_to)
+                return True
+
         node1.connect_to(node2)
+
+        if node1.teleport_to and not node2:
+            self.ConnectNodes(node1.get_prev(), node1, connect=False)
 
         # TODO: Prevent illegal connections
         # TODO: Updated lasers lines (also dotted)
@@ -676,9 +684,6 @@ class Node():
 
         if node:
             node.prev_node = self
-
-            # if node.teleport_to:
-            #    node.connect_to(node.teleport_to)
 
             # Draw the line
             line = LineSegs("laser")
