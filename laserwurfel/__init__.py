@@ -44,13 +44,19 @@ class Laserwurfel(ShowBase):
         for y in [-1, 0, 1]]
 
         sun = DirectionalLight('sun')
-        sun.set_color((1.0, 1.0, 1.0, 1.0))
+        sun.set_color(VBase4(0.8, 0.8, 0.5, 1.0))
         self.sun = self.render.attach_new_node(sun)
-        self.sun.set_hpr(0, -20, 0)
-        self.cube.set_light(self.sun)
+        self.sun.set_hpr(-45, -45, 0)
+        self.render.set_light(self.sun)
+
+        fill = DirectionalLight('fill')
+        fill.set_color(VBase4(0.5, 0.5, 0.8, 1.0))
+        self.fill_light = self.render.attach_new_node(fill)
+        self.fill_light.set_hpr(135, 45, 0)
+        self.render.set_light(self.fill_light)
 
         ambient = AmbientLight("ambient")
-        ambient.set_color((0.4, 0.4, 0.4, 1.0))
+        ambient.set_color(VBase4(0.2, 0.2, 0.2, 1.0))
         self.ambient = self.render.attach_new_node(ambient)
         self.render.set_light(self.ambient)
 
@@ -644,8 +650,8 @@ class Node():
 
         light = PointLight('node_light')
         light.setColor(VBase4(1, 0, 0, 0.5))
-        self.lnp = render.attachNewNode(light)
-        self.lnp.set_pos(5 * y, 5 * x, 5 * z)
+        self.lnp = self.model.attachNewNode(light)
+        self.lnp.set_pos(y, x, z)
 
     def setup_model(self, element):
         self.model = self.cube.loader.loadModel(ASSET + "models/" + element)
