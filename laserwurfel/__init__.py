@@ -364,6 +364,21 @@ class Laserwurfel(ShowBase):
         print("Selected:", node.is_selected())
 
         self.UpdateCurrentNode()
+        self.CheckWin()
+
+    def CheckWin(self):
+        win = True
+        for w in self.nodes:
+            for x in w:
+                for y in x:
+                    if y and y.model:
+                        if not y.is_selected():
+                            win = False
+        if win:
+            self.OnWin()
+
+    def OnWin(self):
+        print("~~~~~~ YOU WON THE LEVEL ~~~~~~~")
 
     def ConnectNodes(self, node1, node2, connect=True):
         print("Connect", node1, node2, connect)
@@ -402,7 +417,6 @@ class Laserwurfel(ShowBase):
             self.ConnectNodes(node1.get_prev(), node1, connect=False)
 
         # TODO: Prevent illegal connections
-        # TODO: Updated lasers lines (also dotted)
         return True
 
     def ReverseString(self, node):
@@ -612,12 +626,8 @@ class Grid():
         pos = cube.GetPositionBetweenNodes(node1, node2)
         vecC = pos[0]
         vecA = pos[1]
-        # TODO: Rotate grids
         # TODO: Find correct position for grid
         self.model.set_pos(vecC[0], vecC[1], vecC[2])
-
-        # r1 = node1.model.get_hpr()
-        # r2 = node2.model.get_hpr()
 
         self.model.look_at(vecA[0], vecA[1], vecA[2])
         r3 = [0, 0, 0]
@@ -644,9 +654,6 @@ class Grid():
             r3[2] = -90 * (vecC[2] / 4.5)
             r3[1] = r4[1]
 
-        print("R3", vecC)
-        print("R4", r4)
-
         # self.model.look_at(vecA[0], vecA[1], vecA[2])
         self.model.set_hpr(r3[0], r3[1], r3[2])
         self.model.reparent_to(cube.cube)
@@ -660,14 +667,40 @@ class Switch():
 
         pos = cube.GetPositionBetweenNodes(node1, node2)
         vecC = pos[0]
-        # TODO: Rotate switches
-        # TODO: Find correct position for switch
+        vecA = pos[1]
+        # TODO: Find correct position for grid
         self.model.set_pos(vecC[0], vecC[1], vecC[2])
-        self.model.look_at(0, 0, 0)
-        self.model.set_hpr(
-            self.model,
-            (0, 90, 0),
-        )
+
+        self.model.look_at(vecA[0], vecA[1], vecA[2])
+        r3 = [0, 0, 0]
+        r4 = self.model.get_hpr()
+        r3[0] = r4[0]
+        r3[1] = 0
+        if vecC[2] < 4.5 and vecC[2] > -4.5:
+            r3[1] = 90
+        elif vecC[2] == -4.5:
+            r3[1] = 180
+
+        # r3[2] = 0
+        if (abs(vecC[0]) == 4.5 and abs(vecC[1]) == 4.5 or
+            abs(vecC[0]) == 4.5 and abs(vecC[2]) == 4.5 or
+                abs(vecC[1]) == 4.5 and abs(vecC[2]) == 4.5):
+            r3[2] = -45
+        elif abs(vecC[0]) == 4.5:
+            r3[2] = -90 * (vecC[0] / 4.5)
+            r3[1] = r4[1]
+        elif abs(vecC[1]) == 4.5:
+            r3[2] = -90 * (vecC[1] / 4.5)
+            r3[1] = r4[1]
+        elif abs(vecC[2]) == 4.5:
+            r3[2] = -90 * (vecC[2] / 4.5)
+            r3[1] = r4[1]
+
+        print("R3", vecC)
+        print("R4", r4)
+
+        # self.model.look_at(vecA[0], vecA[1], vecA[2])
+        self.model.set_hpr(r3[0], r3[1], r3[2])
         self.model.reparent_to(cube.cube)
 
 
