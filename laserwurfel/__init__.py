@@ -31,6 +31,7 @@ class Laserwurfel(ShowBase):
         music = base.loader.loadSfx(ASSET + "music/menu.ogg")  
         music.setLoop(True)
         music.setVolume(0.5)
+        print(music.getVolume())
         music.play()
         base.setBackgroundColor(0.1,0.1,0.1)
         global playMusic
@@ -164,7 +165,7 @@ class Laserwurfel(ShowBase):
         self.SetKeybindings()
         # TODO: Do not hard code level number
         self.LoadLevel(num)
-        self.introDialoge()
+        self.introDialoge(num)
 
     def drawMain(self):
         myFrame = DirectFrame(frameColor=(0, 0, 0.30, 1),
@@ -225,11 +226,25 @@ class Laserwurfel(ShowBase):
 
         returnToMenu = DirectButton(text = ("Return to main menu"), scale=.05, command=switchMain, pos=(0,0,-0.8), parent=myFrame, frameSize=(-22, 22, -1.5, 1.9))  
 
-    def introDialoge(self):
-        myFrame = DirectFrame(frameColor=(1, 1, 1, 0.9),
-                          frameSize=(-1, 1, -1, 1)
-                          ,pos=(0,0,0))
-    
+    def introDialoge(self, num):
+        dsf1=self.mkdsf()
+        dsf1.setPos(0,0,0)
+        t1=OnscreenText(parent=dsf1.getCanvas(), pos=(1,0), scale=.05, wordwrap=35)
+        t1['text'] = self.LoadStory(num)['intro']
+
+    def mkdsf(self):
+        size=(0.15,.15)
+        bgcol=(.2, .2, .2, .5)
+        scrollbarw=0.05
+        borderw=(0.01,0.01)
+        return DirectScrolledFrame(
+            frameSize=(-1 ,1,-1,1),
+            canvasSize=(-0, 0, -3, .1),
+            borderWidth=borderw,
+            scrollBarWidth=scrollbarw,
+            scale=1,
+        ) 
+
     def drawSettings(self):
         myFrame = DirectFrame(frameColor=(0, 0, 0.30, 1),
                           frameSize=(-1.75, 1.75, -1, 1)
@@ -722,6 +737,18 @@ class Laserwurfel(ShowBase):
             "string": string
         }
 
+    def LoadStory(self, number):
+        level_path_intro = path.join(LEVELS, "level" + str(number), "intro") 
+        level_path_outro = path.join(LEVELS, "level" + str(number), "outro")
+        print(level_path_intro)
+        intro = open(level_path_intro).read()
+        outro = open(level_path_outro).read()
+
+        return {
+            "intro": intro,
+            "outro": outro
+        } 
+
     def LoadLevel(self, number):
         level_path = path.join(LEVELS, "level" + str(number), "full")
         self.level.parse(level_path)
@@ -845,12 +872,13 @@ class Laserwurfel(ShowBase):
                     i = 1
 
         # Meta
-        music = self.loader.loadSfx(
+        music_lvl = self.loader.loadSfx(
             ASSET + 'music/' + self.level.meta["track"][1])
-        music.setLoop(True)
-        music.setVolume(music.getVolume())
+        music_lvl.setLoop(True)
+        print(music.getVolume())
+        music_lvl.setVolume(music.getVolume())
         if(playMusic == True):
-            music.play()
+            music_lvl.play()
 
     def GetNode(self, pos):
         node = self.nodes[pos[0] + 1][pos[1] + 1][pos[2] + 1]
