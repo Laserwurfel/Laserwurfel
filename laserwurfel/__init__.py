@@ -33,24 +33,30 @@ class Laserwurfel(ShowBase):
         self.cube.set_name('Planet')
         self.cube.reparent_to(self.render)
 
-        self.nodes = [[
-            [[
+        self.nodes = [
+            [
                 [
                     Node(x, y, z, self)
                     if [x, y, z].count(0) < 2 else None
                     for z in [-1, 0, 1]
                 ]
-            ] for x in [-1, 0, 1]]
-        ] for y in [-1, 0, 1]]
+            for x in [-1, 0, 1]]
+        for y in [-1, 0, 1]]
 
         sun = DirectionalLight('sun')
-        sun.set_color((1.0, 1.0, 1.0, 1.0))
+        sun.set_color(VBase4(0.8, 0.8, 0.5, 1.0))
         self.sun = self.render.attach_new_node(sun)
-        self.sun.set_hpr(0, -20, 0)
-        self.cube.set_light(self.sun)
+        self.sun.set_hpr(-45, -45, 0)
+        self.render.set_light(self.sun)
+
+        fill = DirectionalLight('fill')
+        fill.set_color(VBase4(0.5, 0.5, 0.8, 1.0))
+        self.fill_light = self.render.attach_new_node(fill)
+        self.fill_light.set_hpr(135, 45, 0)
+        self.render.set_light(self.fill_light)
 
         ambient = AmbientLight("ambient")
-        ambient.set_color((0.4, 0.4, 0.4, 1.0))
+        ambient.set_color(VBase4(0.2, 0.2, 0.2, 1.0))
         self.ambient = self.render.attach_new_node(ambient)
         self.render.set_light(self.ambient)
 
@@ -59,6 +65,17 @@ class Laserwurfel(ShowBase):
         self.camera.reparent_to(self.camera_pivot)
         self.camera.set_pos(0, -50, 0)
         self.camera_lerp = None
+
+        def _place_facing_helper(x, z):
+            helper = self.camera_pivot.attach_new_node('facing-helper')
+            helper.set_pos(x, -1, z)
+            return helper
+
+        self.facing_helper = [
+            [
+                _place_facing_helper(x, z)
+            for x in [-1, 0, 1]]
+        for z in [-1, 0, 1]]
 
         # Mouse
         self.accept("mouse1", self.OnLeftDown)
@@ -101,10 +118,12 @@ class Laserwurfel(ShowBase):
         for item in items:
             for key in item[1].split(","):
                 if key not in duplicates:
-                    self.accept(
-                        key,
-                        self.move_camera(actions[item[0]])
-                    )
+                    action = actions[item[0]]()
+                    if item[0].startswith('rot'):
+                        action = self.move_camera(action)
+                    else:
+                        action = self.select_node(action)
+                    self.accept(key, action)
 
     def move_camera(self, movement):
         def _move():
@@ -114,7 +133,7 @@ class Laserwurfel(ShowBase):
             # perform movement on target
             self.camera_target.set_quat(
                 self.camera_target,
-                movement(),
+                movement,
             )
 
             # round to nearest right angle
@@ -133,6 +152,26 @@ class Laserwurfel(ShowBase):
             self.camera_lerp.start()
 
         return _move
+
+    def select_node(self, position):
+        def _select():
+            if False in [a % 90 == 0 for a in self.camera_pivot.get_hpr()]:
+                return
+
+            helper = self.facing_helper[position[1]+1][position[0]+1]
+
+            [x, y, z] = [
+                int(round(i)) for i in
+                helper.get_pos(self.render)
+            ]
+
+            node = self.nodes[x+1][y+1][z+1]
+            if node.is_disabled:
+                return
+
+            self.OnNodeSelected(node)
+
+        return _select
 
     def OnRotLeft(self):
         return Quat(
@@ -183,28 +222,28 @@ class Laserwurfel(ShowBase):
         )
 
     def OnTopLeft(self):
-        pass
+        return (-1, 1)
 
     def OnTopCenter(self):
-        pass
+        return (0, 1)
 
     def OnTopRight(self):
-        pass
+        return (1, 1)
 
     def OnMiddleLeft(self):
-        pass
+        return (-1, 0)
 
     def OnMiddleRight(self):
-        pass
+        return (1, 0)
 
     def OnBottomLeft(self):
-        pass
+        return (-1, -1)
 
     def OnBottomCenter(self):
-        pass
+        return (0, -1)
 
     def OnBottomRight(self):
-        pass
+        return (1, -1)
 
     def mouse_drag_task(self, task):
         mw = self.mouseWatcherNode
@@ -250,13 +289,11 @@ class Laserwurfel(ShowBase):
         return node
 
     def UpdateCurrentNode(self):
-        for x in self.nodes:
-            for y in x:
-                for z in y:
-                    for w in z:
-                        for node in w:
-                            if node:
-                                node.set_current(current=False)
+        for y in self.nodes:
+            for x in y:
+                for node in x:
+                    if node:
+                        node.set_current(current=False)
 
         node = self.initial_node
         while node and node.get_next():
@@ -268,10 +305,13 @@ class Laserwurfel(ShowBase):
 
     def OnNodeSelected(self, obj, select=True):
 
-        pos = []
-        for v in obj.getName().split("|")[1].split(","):
-            pos.append(int(v) + 1)
-        node = self.nodes[pos[0]][0][pos[1]][0][pos[2]]
+        if not isinstance(obj, Node):
+            pos = []
+            for v in obj.getName().split("|")[1].split(","):
+                pos.append(int(v) + 1)
+            node = self.nodes[pos[0]][pos[1]][pos[2]]
+        else:
+            node = obj
         current_node = self.GetCurrentNode()
 
         # Debug information
@@ -446,6 +486,7 @@ class Laserwurfel(ShowBase):
 
                 node = self.GetNode(line[1])
                 node.model.removeNode()
+                node.is_disabled = True
 
             elif line[0].__name__ == "wall":
                 node1 = self.GetNode(line[1])
@@ -551,7 +592,7 @@ class Laserwurfel(ShowBase):
         # self.music.play()
 
     def GetNode(self, pos):
-        node = self.nodes[pos[0] + 1][0][pos[1] + 1][0][pos[2] + 1]
+        node = self.nodes[pos[0] + 1][pos[1] + 1][pos[2] + 1]
         return node
 
     def GetPositionBetweenNodes(self, node1, node2):
@@ -604,6 +645,7 @@ class Node():
         self.selected = False
         self.is_destination = False
         self.is_editable = True
+        self.is_disabled = False
         self.next_node = None
         self.prev_node = None
         self.laser = None
@@ -616,8 +658,8 @@ class Node():
 
         light = PointLight('node_light')
         light.setColor(VBase4(1, 0, 0, 0.5))
-        self.lnp = render.attachNewNode(light)
-        self.lnp.set_pos(5 * y, 5 * x, 5 * z)
+        self.lnp = self.model.attachNewNode(light)
+        self.lnp.set_pos(y, x, z)
 
     def setup_model(self, element):
         self.model = self.cube.loader.loadModel(ASSET + "models/" + element)
