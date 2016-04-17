@@ -84,7 +84,7 @@ class Laserwurfel(ShowBase):
 
         self.SetKeybindings()
         # TODO: Do not hard code level number
-        self.LoadLevel(5)
+        self.LoadLevel(1)
 
     def SetKeybindings(self):
 
@@ -468,7 +468,7 @@ class Laserwurfel(ShowBase):
 
         # Structure
         for line in self.level.structure:
-            print(line[0].__name__)
+            # print(line[0].__name__)
             if line[0].__name__ == "path":
                 initial_node = self.GetNode(line[1])
                 initial_node.select(True)
@@ -615,7 +615,40 @@ class Grid():
         # TODO: Rotate grids
         # TODO: Find correct position for grid
         self.model.set_pos(vecC[0], vecC[1], vecC[2])
+
+        # r1 = node1.model.get_hpr()
+        # r2 = node2.model.get_hpr()
+
         self.model.look_at(vecA[0], vecA[1], vecA[2])
+        r3 = [0, 0, 0]
+        r4 = self.model.get_hpr()
+        r3[0] = r4[0]
+        r3[1] = 0
+        if vecC[2] < 4.5 and vecC[2] > -4.5:
+            r3[1] = 90
+        elif vecC[2] == -4.5:
+            r3[1] = 180
+
+        # r3[2] = 0
+        if (abs(vecC[0]) == 4.5 and abs(vecC[1]) == 4.5 or
+            abs(vecC[0]) == 4.5 and abs(vecC[2]) == 4.5 or
+                abs(vecC[1]) == 4.5 and abs(vecC[2]) == 4.5):
+            r3[2] = -45
+        elif abs(vecC[0]) == 4.5:
+            r3[2] = 90 * (vecC[0] / 4.5)
+            r3[1] = r4[1]
+        elif abs(vecC[1]) == 4.5:
+            r3[2] = -90 * (vecC[1] / 4.5)
+            r3[1] = r4[1]
+        elif abs(vecC[2]) == 4.5:
+            r3[2] = -90 * (vecC[2] / 4.5)
+            r3[1] = r4[1]
+
+        print("R3", vecC)
+        print("R4", r4)
+
+        # self.model.look_at(vecA[0], vecA[1], vecA[2])
+        self.model.set_hpr(r3[0], r3[1], r3[2])
         self.model.reparent_to(cube.cube)
 
 
