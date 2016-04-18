@@ -32,3 +32,17 @@ O--------()--------O--------()--------O--------()--------O--------()--------O
                    |@@@@@@@@@@@@@@@@@@|
                    |@@@@@@@@@@@@@@@@@@|
                    O--------()--------O
+
+* front_left_top back_right_top
+
+-- left_bottom back_bottom
+-- back_bottom back_left_bottom
+-- back_left_bottom back_left
+-- back_left back_left_top
+-- right_bottom front_bottom
+
+% back_left_top front_right_top
+% front_right front_right_bottom
+% front_left_bottom back_right_bottom
+
+[] right_bottom right_top right_bottom front_left_bottom back_bottom front_left_bottom

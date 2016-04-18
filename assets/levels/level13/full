@@ -32,3 +32,15 @@ O--------()--------O--------()--------O--------()--------O--------()--------O
                    |                  |
                    |                  |
                    O--------()--------O
+
+
+
+* back_right_top front_left_bottom
+
+%% front_right back_right
+-- back_right right_bottom
+
+! right_top
+! back_top
+
+[] front_right_bottom front_left_top front_right_bottom back_right_top
