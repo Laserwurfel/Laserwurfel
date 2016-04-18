@@ -188,7 +188,7 @@ class Laserwurfel(ShowBase):
         def quit():
             sys.exit()  
 
-        resume = DirectButton(text = ("Resume last saved game"), scale=.05, command=switchCamp, pos=(0,0,0.5), parent=myFrame, frameSize=(-20, 20, -1.5, 1.9))
+        #resume = DirectButton(text = ("Resume last saved game"), scale=.05, command=switchCamp, pos=(0,0,0.5), parent=myFrame, frameSize=(-20, 20, -1.5, 1.9))
         campaign = DirectButton(text = ("Campaign"), scale=.05, command=switchCamp, pos=(0,0,0.25), parent=myFrame, frameSize=(-20, 20, -1.5, 1.9))
         settings = DirectButton(text = ("Settings"), scale=.05, command=switchSettings, pos=(0,0,0), parent=myFrame, frameSize=(-20, 20, -1.5, 1.9))
         quit = DirectButton(text = ("Quit"), scale=.05, command=quit, pos=(0,0,-0.25), parent=myFrame, frameSize=(-20, 20, -1.5, 1.9))
@@ -231,6 +231,20 @@ class Laserwurfel(ShowBase):
         dsf1.setPos(0,0,0)
         t1=OnscreenText(parent=dsf1.getCanvas(), pos=(1,0), scale=.05, wordwrap=35)
         t1['text'] = self.LoadStory(num)['intro']
+        def closeWindow():
+            dsf1.destroy()
+
+        btn_continue = DirectButton(text = ("Continue"), scale=.05,  parent=dsf1.getCanvas(), frameSize=(-3, 3, -1.5, 1.9), pos=(1,0,-2.7), command=closeWindow)
+
+    def outroDialoge(self):
+        dsf1=self.mkdsf()
+        dsf1.setPos(0,0,0)
+        t1=OnscreenText(parent=dsf1.getCanvas(), pos=(1,0), scale=.05, wordwrap=35)
+        t1['text'] = self.LoadStory(1)['outro']
+        def closeWindow():
+            dsf1.destroy()
+
+        btn_continue = DirectButton(text = ("Continue"), scale=.05,  parent=dsf1.getCanvas(), frameSize=(-3, 3, -1.5, 1.9), pos=(1,0,-2.7), command=closeWindow)
 
     def mkdsf(self):
         size=(0.15,.15)
@@ -640,6 +654,7 @@ class Laserwurfel(ShowBase):
 
     def OnWin(self):
         print("~~~~~~ YOU WON THE LEVEL ~~~~~~~")
+        self.outroDialoge()
 
     def ConnectNodes(self, node1, node2, connect=True):
         print("Connect", node1, node2, connect)
