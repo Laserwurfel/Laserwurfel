@@ -5,14 +5,13 @@ import operator
 import random
 import config
 from os import path
-from direct.gui.OnscreenText import OnscreenText 
+from direct.gui.OnscreenText import OnscreenText
 from direct.showbase.ShowBase import ShowBase, DirectObject
 from direct.interval.IntervalGlobal import *
 from direct.interval.LerpInterval import LerpQuatInterval
 from direct.task import Task
 from panda3d.core import *
 from pandac.PandaModules import *
-from direct.gui.DirectGui import *
 from direct.gui.DirectGui import *
 from direct.gui.DirectGui import DirectFrame
 import sys
@@ -26,81 +25,16 @@ class Laserwurfel(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         self.drawMain()
-        #global music
+        # global music
         global music
-        music = base.loader.loadSfx(ASSET + "music/menu.ogg")  
+        music = base.loader.loadSfx(ASSET + "music/menu.ogg")
         music.setLoop(True)
         music.setVolume(0.5)
         print(music.getVolume())
         music.play()
-        base.setBackgroundColor(0.1,0.1,0.1)
+        base.setBackgroundColor(0.1, 0.1, 0.1)
         global playMusic
         playMusic = True
-        '''    
-        # self.render.set_antialias(p.AntialiasAttrib.M_auto)
-        self.disableMouse()
-        self.mouse_picker = Picker(self)
-        self.initial_node = None
-        self.end_node = None
-        self.level = level.Level()
-
-        self.cube = self.loader.loadModel(ASSET + 'models/game_elements/cube')
-        self.cube.set_name('Planet')
-        self.cube.reparent_to(self.render)
-        self.nodes = [
-            [
-                [
-                    Node(x, y, z, self)
-                    if [x, y, z].count(0) < 2 else None
-                    for z in [-1, 0, 1]
-                ]
-            for x in [-1, 0, 1]]
-        for y in [-1, 0, 1]]
-
-        sun = DirectionalLight('sun')
-        sun.set_color(VBase4(0.8, 0.8, 0.5, 1.0))
-        self.sun = self.render.attach_new_node(sun)
-        self.sun.set_hpr(-45, -45, 0)
-        self.render.set_light(self.sun)
-
-        fill = DirectionalLight('fill')
-        fill.set_color(VBase4(0.5, 0.5, 0.8, 1.0))
-        self.fill_light = self.render.attach_new_node(fill)
-        self.fill_light.set_hpr(135, 45, 0)
-        self.render.set_light(self.fill_light)
-
-        ambient = AmbientLight("ambient")
-        ambient.set_color(VBase4(0.2, 0.2, 0.2, 1.0))
-        self.ambient = self.render.attach_new_node(ambient)
-        self.render.set_light(self.ambient)
-
-        self.camera_target = self.render.attach_new_node('camera-target')
-        self.camera_pivot = self.render.attach_new_node("camera-pivot")
-        self.camera.reparent_to(self.camera_pivot)
-        self.camera.set_pos(0, -50, 0)
-        self.camera_lerp = None
-
-        def _place_facing_helper(x, z):
-            helper = self.camera_pivot.attach_new_node('facing-helper')
-            helper.set_pos(x, -1, z)
-            return helper
-
-        self.facing_helper = [
-            [
-                _place_facing_helper(x, z)
-            for x in [-1, 0, 1]]
-        for z in [-1, 0, 1]]
-
-        # Mouse
-        self.accept("mouse1", self.OnLeftDown)
-        self.last_click = None
-        self.taskMgr.add(self.mouse_drag_task, "MouseDragTask")
-
-        self.SetKeybindings()
-        # TODO: Do not hard code level number
-        self.LoadLevel(3)
-        '''
-
 
     def startGame(self, num):
         # self.render.set_antialias(p.AntialiasAttrib.M_auto)
@@ -169,8 +103,8 @@ class Laserwurfel(ShowBase):
 
     def drawMain(self):
         myFrame = DirectFrame(frameColor=(0, 0, 0.30, 1),
-                          frameSize=(-1.75, 1.75, -1, 1)
-                          ,pos=(0,0,0))
+                          frameSize=(-1.75, 1.75, -1, 1),
+                          pos=(0,0,0))
 
         v = [0]
         bk_text = "LASERWURFEL"
@@ -206,13 +140,14 @@ class Laserwurfel(ShowBase):
         scale = 0.2,fg=(1,1,1,1),align=TextNode.ACenter,mayChange=1, parent=myFrame)        
 
         def chooseLevel(num):
+            self.current_level = num
             self.startGame(num)
             music.stop()
             myFrame.destroy()
 
         def switchMain():
             self.drawMain()
-            myFrame.destroy()       
+            myFrame.destroy()
 
         for x in range(1, 21):
             if(x % 9 == 0 and x > 0):
@@ -221,7 +156,25 @@ class Laserwurfel(ShowBase):
             xPos = -1 + (xDivider/4.0)
             xDivider += 1
 
-            lvl = DirectButton(text = ("Level " + `x`), scale=.05, command=chooseLevel, extraArgs=[x], pos=(xPos,0,yPos), parent=myFrame, frameSize=(-2, 2, -1.5, 1.9))
+            available = int(config.parser.items("Levels")[0][1])
+            if x <= available:
+                state = DGG.NORMAL
+                color = (0, 1, 0, 1)
+            else:
+                state = DGG.DISABLED
+                color = (1, 0, 0, 1)
+
+            DirectButton(
+                text=("Level " + repr(x)),
+                scale=.05,
+                command=chooseLevel,
+                extraArgs=[x],
+                pos=(xPos, 0, yPos),
+                parent=myFrame,
+                frameSize=(-2, 2, -1.5, 1.9),
+                frameColor=color,
+                state=state
+            )
 
 
         returnToMenu = DirectButton(text = ("Return to main menu"), scale=.05, command=switchMain, pos=(0,0,-0.8), parent=myFrame, frameSize=(-22, 22, -1.5, 1.9))  
@@ -237,17 +190,35 @@ class Laserwurfel(ShowBase):
         btn_continue = DirectButton(text = ("Continue"), scale=.05,  parent=dsf1.getCanvas(), frameSize=(-3, 3, -1.5, 1.9), pos=(1,0,-2.7), command=closeWindow)
 
     def outroDialoge(self):
-        dsf1=self.mkdsf()
-        dsf1.setPos(0,0,0)
-        t1=OnscreenText(parent=dsf1.getCanvas(), pos=(1,0), scale=.05, wordwrap=35)
+        dsf1 = self.mkdsf()
+        dsf1.setPos(0, 0, 0)
+        t1 = OnscreenText(
+            parent=dsf1.getCanvas(),
+            pos=(1, 0),
+            scale=.05,
+            wordwrap=35
+        )
         t1['text'] = self.LoadStory(1)['outro']
+
         def closeWindow():
             dsf1.destroy()
+            available = int(config.parser.items("Levels")[0][1])
+            if available == self.current_level:
+                config.parser.set("Levels", "available", str(available + 1))
+                config.write()
+            self.closeLevel()
 
-        btn_continue = DirectButton(text = ("Continue"), scale=.05,  parent=dsf1.getCanvas(), frameSize=(-3, 3, -1.5, 1.9), pos=(1,0,-2.7), command=closeWindow)
+        DirectButton(
+            text=("Continue"),
+            scale=.05,
+            parent=dsf1.getCanvas(),
+            frameSize=(-3, 3, -1.5, 1.9),
+            pos=(1, 0, -2.7),
+            command=closeWindow
+        )
 
     def mkdsf(self):
-        size=(0.15,.15)
+        size = (0.15, 0.15)
         bgcol=(.2, .2, .2, .5)
         scrollbarw=0.05
         borderw=(0.01,0.01)
@@ -350,8 +321,7 @@ class Laserwurfel(ShowBase):
 
         volume = DirectSlider(range=(0,1), value=.5, pageSize=3, command=setVolume, pos=(0,0,0.5), parent=myFrame)
         turnAudioControl = DirectButton(text = ("Turn Music Off"), scale=.05, command=turnAudio, pos=(0,0,0.25), parent=myFrame, frameSize=(-20, 20, -1.5, 1.9))
-        returnToMenu = DirectButton(text = ("Return to main menu"), scale=.05, command=switchSettings, pos=(0,0,-0.5), parent=myFrame, frameSize=(-20, 20, -1.5, 1.9))      
-
+        returnToMenu = DirectButton(text = ("Return to main menu"), scale=.05, command=switchSettings, pos=(0,0,-0.5), parent=myFrame, frameSize=(-20, 20, -1.5, 1.9))
 
     def quit(self, event=None):
         self.onDestroy(event)
@@ -359,7 +329,7 @@ class Laserwurfel(ShowBase):
             base
         except NameError:
             sys.exit()
-        base.userExit()    
+        base.userExit()
 
     def SetKeybindings(self):
 
@@ -399,6 +369,8 @@ class Laserwurfel(ShowBase):
                     else:
                         action = self.select_node(action)
                     self.accept(key, action)
+
+        self.accept("escape", self.closeLevel)
 
     def move_camera(self, movement):
         def _move():
@@ -553,6 +525,14 @@ class Laserwurfel(ShowBase):
             rotation,
         )
         self.camera_pivot.set_quat(self.camera_target.get_quat())
+
+    def closeLevel(self):
+        print("CLOSE")
+        self.music_lvl.stop()
+        for node in self.render.getChildren():
+            node.removeNode()
+        self.render.clearLight()
+        self.drawCampaign()
 
     def SetInitialNode(self, node):
         self.initial_node = node
@@ -887,13 +867,13 @@ class Laserwurfel(ShowBase):
                     i = 1
 
         # Meta
-        music_lvl = self.loader.loadSfx(
+        self.music_lvl = self.loader.loadSfx(
             ASSET + 'music/' + self.level.meta["track"][1])
-        music_lvl.setLoop(True)
+        self.music_lvl.setLoop(True)
         print(music.getVolume())
-        music_lvl.setVolume(music.getVolume())
-        if(playMusic == True):
-            music_lvl.play()
+        self.music_lvl.setVolume(music.getVolume())
+        if playMusic:
+            self.music_lvl.play()
 
     def GetNode(self, pos):
         node = self.nodes[pos[0] + 1][pos[1] + 1][pos[2] + 1]
